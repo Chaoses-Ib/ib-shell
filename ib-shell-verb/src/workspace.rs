@@ -16,9 +16,18 @@ pub struct OpenFileInWorkspace {
 }
 
 impl OpenFileInWorkspace {
+    fn is_cargo_workspace(dir: &Path) -> bool {
+        dir.join("Cargo.lock").exists()
+    }
+
+    fn is_git_repo(dir: &Path) -> bool {
+        dir.join(".git").exists()
+    }
+
+    #[cfg(test)]
     fn find_git_repo(p: &Path) -> Option<&Path> {
         for p in p.ancestors() {
-            if p.join(".git").exists() {
+            if Self::is_git_repo(p) {
                 return Some(p);
             }
         }
@@ -26,8 +35,13 @@ impl OpenFileInWorkspace {
     }
 
     fn find_workspace<'p>(&self, p: &'p Path) -> Option<&'p Path> {
-        if let Some(p) = Self::find_git_repo(p) {
-            return Some(p);
+        for p in p.ancestors() {
+            if Self::is_cargo_workspace(p) {
+                return Some(p);
+            }
+            if Self::is_git_repo(p) {
+                return Some(p);
+            }
         }
         if self.parent_as_workspace {
             return p.parent();
