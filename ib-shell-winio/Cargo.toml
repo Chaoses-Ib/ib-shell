@@ -1,0 +1,9 @@
+[package]
+name = "ib-shell-winio"
+version = "0.1.0"
+edition = "2024"
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+winio = { version = "0.10", default-features = false }

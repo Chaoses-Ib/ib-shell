@@ -1,0 +1,36 @@
+[package]
+name = "ib-shell-verb"
+version = "0.1.0"
+edition = "2024"
+repository.workspace = true
+license.workspace = true
+
+[features]
+hook = ["dep:slim-detours-sys"]
+bin = ["dep:clap"]
+
+[dependencies]
+anyhow = "1"
+bon = "3"
+clap = { version = "4", optional = true, features = ["derive"] }
+open = { version = "5", features = ["shellexecute-on-windows"] }
+tracing = "0.1"
+which = "8"
+
+[target.'cfg(target_family = "windows")'.dependencies]
+slim-detours-sys = { version = "0.4", optional = true }
+widestring = "1"
+windows = "0.62"
+windows-sys = { version = "0.61", features = [
+    "Win32_System_Registry",
+    "Win32_UI_Shell",
+] }
+
+[dev-dependencies]
+ib-shell-verb = { path = ".", features = [
+    "hook",
+] }
+
+[[bin]]
+name = "ib-open-workspace"
+required-features = ["bin"]
