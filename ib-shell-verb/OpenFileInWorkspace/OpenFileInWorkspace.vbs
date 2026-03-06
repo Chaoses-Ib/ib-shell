@@ -2,7 +2,7 @@
 ' Description: Given a file path, open its parent folder (or Git root) and show the file in VS Code.
 ' Version: 240727
 ' Author: @Chaoses-Ib
-' Homepage: https://github.com/Chaoses-Ib/IbDOpusScripts
+' Homepage: https://github.com/Chaoses-Ib/ib-shell
 
 Set WshShell = CreateObject("WScript.Shell")
 strVbsPath = WScript.ScriptFullName
