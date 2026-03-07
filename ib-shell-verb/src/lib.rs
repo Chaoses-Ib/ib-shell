@@ -1,3 +1,6 @@
+/*!
+A library for handling of custom Windows Shell verbs (actions like `open`) and injecting them.
+*/
 #![feature(assert_matches)]
 #![feature(sync_unsafe_cell)]
 use std::path::Path;

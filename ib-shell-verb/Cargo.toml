@@ -2,6 +2,9 @@
 name = "ib-shell-verb"
 version = "0.1.0"
 edition = "2024"
+description = "A library for handling of custom Windows Shell verbs (actions like `open`) and injecting them."
+keywords = ["shell", "desktop-environment", "desktop", "hook"]
+categories = ["gui", "os"]
 repository.workspace = true
 license.workspace = true
 
