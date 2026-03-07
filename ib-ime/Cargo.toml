@@ -1,0 +1,20 @@
+[package]
+name = "ib-ime"
+version = "0.1.0"
+edition = "2024"
+description = "A library for controlling input controls' IME (Input Method Editor) behavior on Windows."
+keywords = ["ime", "desktop-environment", "desktop", "shell", "cjk"]
+categories = ["gui", "os"]
+repository.workspace = true
+license.workspace = true
+
+[features]
+log = []
+
+[dependencies]
+bitflags = "2"
+bon = "3"
+windows-sys = { version = "0.61", features = ["Win32_UI_Input_Ime", "Win32_UI_Shell"] }
+
+[dev-dependencies]
+winio = { version = "0.10", default-features = false, features = ["win32"] }

@@ -1,16 +1,10 @@
-# ib-shell
-Some desktop environment libraries, mainly for Windows Shell (Windows' built-in desktop environment).
-
-## ib-ime
-[![crates.io](https://img.shields.io/crates/v/ib-ime.svg)](https://crates.io/crates/ib-ime)
-[![Documentation](https://docs.rs/ib-ime/badge.svg)](https://docs.rs/ib-ime)
-[![License](https://img.shields.io/crates/l/ib-ime.svg)](LICENSE.txt)
-
+/*!
 A library for controlling input controls' IME (Input Method Editor) behavior on Windows.
 
 Usage:
 ```rust
 // cargo add ib-ime
+
 // Manually set:
 ib_ime::imm::set_ime_state(false);
 ib_ime::imm::set_ime_conversion_mode(ib_ime::imm::ImeConversionMode::ALPHANUMERIC);
@@ -20,16 +14,11 @@ ib_ime::hook::ImeHookConfig::default_off().hook_window(edit_hwnd);
 ```
 
 [Winio](https://github.com/compio-rs/winio) integration example:
-[examples/winio.rs](ib-ime/examples/winio.rs)
+[examples/winio.rs](../examples/winio.rs)
 
 See also:
 - [ib-matcher: A multilingual, flexible and fast string, glob and regex matcher. Support 拼音匹配 and ローマ字検索.](https://github.com/Chaoses-Ib/ib-matcher)
+*/
 
-## ib-shell-verb
-- `ib-open-workspace`:
-  Given a file path, open its parent folder (or Git root) and show the file in VS Code.
-
-  For example:
-  ```sh
-  ib-open-workspace --vscode README.md
-  ```
+pub mod hook;
+pub mod imm;
