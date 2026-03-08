@@ -24,7 +24,7 @@ fn main() {
         .maybe_vscode(args.vscode.then(Default::default))
         .build();
 
-    let result = ib_shell_verb::open(&args.path, &[Box::new(verb)]);
+    let result = ib_shell_verb::open(&args.path.into(), &[Box::new(verb)]);
     if let Err(e) = result {
         eprintln!("{}", e);
     }
