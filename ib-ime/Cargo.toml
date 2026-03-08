@@ -18,3 +18,13 @@ windows-sys = { version = "0.61", features = ["Win32_UI_Input_Ime", "Win32_UI_Sh
 
 [dev-dependencies]
 winio = { version = "0.10", default-features = false, features = ["win32"] }
+
+[package.metadata.docs.rs]
+targets = ["x86_64-pc-windows-msvc"]
+all-features = true
+# To test this locally, run:
+# ```
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features
+# $env:RUSTDOCFLAGS="--cfg docsrs"; cargo +nightly doc --all-features
+# ```
+rustdoc-args = ["--cfg", "docsrs"]

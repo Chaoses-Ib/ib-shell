@@ -9,13 +9,18 @@ repository.workspace = true
 license.workspace = true
 
 [features]
+## Hook for injecting custom Windows Shell verbs.
 hook = ["dep:slim-detours-sys"]
+
 bin = ["dep:clap"]
+
+doc = ["dep:document-features"]
 
 [dependencies]
 anyhow = "1"
 bon = "3"
 clap = { version = "4", optional = true, features = ["derive"] }
+document-features = { version = "0.2", optional = true }
 ib-shell-item = { version = "0.1", path = "../ib-shell-item" }
 open = { version = "5", features = ["shellexecute-on-windows"] }
 tracing = "0.1"
@@ -38,3 +43,13 @@ ib-shell-verb = { path = ".", features = [
 [[bin]]
 name = "ib-open-workspace"
 required-features = ["bin"]
+
+[package.metadata.docs.rs]
+targets = ["x86_64-pc-windows-msvc"]
+all-features = true
+# To test this locally, run:
+# ```
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features
+# $env:RUSTDOCFLAGS="--cfg docsrs"; cargo +nightly doc --all-features
+# ```
+rustdoc-args = ["--cfg", "docsrs"]

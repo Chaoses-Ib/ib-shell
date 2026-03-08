@@ -1,6 +1,6 @@
 [package]
 name = "ib-shell-item"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "A library for operating file system files / Windows Shell items."
 keywords = ["path", "file", "shell", "desktop-environment", "desktop"]
@@ -14,3 +14,13 @@ windows = { version = "0.62", features = [
     "Win32_System_Com",
     "Win32_UI_Shell_Common",
 ] }
+
+[package.metadata.docs.rs]
+targets = ["x86_64-pc-windows-msvc"]
+all-features = true
+# To test this locally, run:
+# ```
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features
+# $env:RUSTDOCFLAGS="--cfg docsrs"; cargo +nightly doc --all-features
+# ```
+rustdoc-args = ["--cfg", "docsrs"]
