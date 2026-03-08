@@ -1,0 +1,16 @@
+[package]
+name = "ib-shell-item"
+version = "0.1.0"
+edition = "2024"
+description = "A library for operating file system files / Windows Shell items."
+keywords = ["path", "file", "shell", "desktop-environment", "desktop"]
+categories = ["gui", "os"]
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+widestring = "1"
+windows = { version = "0.62", features = [
+    "Win32_System_Com",
+    "Win32_UI_Shell_Common",
+] }

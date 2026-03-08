@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "ib-ime",
+    "ib-shell-item",
     "ib-shell-verb",
     # "ib-shell-winio",
 ]

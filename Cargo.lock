@@ -621,12 +621,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "ib-shell-item"
+version = "0.1.0"
+dependencies = [
+ "widestring",
+ "windows",
+]
+
+[[package]]
 name = "ib-shell-verb"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "bon",
  "clap",
+ "ib-shell-item",
  "ib-shell-verb",
  "open",
  "slim-detours-sys",

@@ -1,6 +1,6 @@
-use std::{cell::SyncUnsafeCell, path::Path, sync::Mutex};
+use std::{cell::SyncUnsafeCell, sync::Mutex};
 
-use tracing::error;
+use tracing::{debug, error};
 use widestring::U16CStr;
 use windows_sys::{
     Win32::UI::Shell::{SHELLEXECUTEINFOW, ShellExecuteExW},
@@ -23,25 +23,33 @@ pub struct HookConfig {
 static HOOK_CONFIG: Mutex<HookConfig> = Mutex::new(HookConfig { verbs: vec![] });
 
 unsafe extern "system" fn shell_execute_ex_w(pexecinfo: *mut SHELLEXECUTEINFOW) -> BOOL {
+    let real = || unsafe { (*TRUE_SHELL_EXECUTE_EX_W.get())(pexecinfo) };
     let info = unsafe { &*pexecinfo };
+
+    // Some programs use PIDL to open normal files
+    // https://github.com/Chaoses-Ib/IbEverythingExt/issues/104
+    let Some(path) =
+        ib_shell_item::path::ShellPath::from_path_or_id_list(info.lpFile, info.lpIDList as _)
+    else {
+        return real();
+    };
 
     // Check if verb is "open"
     let verb = (!info.lpVerb.is_null()).then(|| unsafe { U16CStr::from_ptr_str(info.lpVerb) });
     #[cfg(test)]
     eprintln!("verb: {verb:?}");
-    if verb.is_none_or(|verb| verb == widestring::u16str!("open")) {
-        let file = unsafe { U16CStr::from_ptr_str(info.lpFile) };
-        let file = file.to_os_string();
-        let path = Path::new(&file);
 
+    debug!(?verb, ?path);
+
+    if verb.is_none_or(|verb| verb == widestring::u16str!("open")) {
         let config = HOOK_CONFIG.lock().unwrap();
 
-        if let Some(r) = crate::open_verbs(path, config.verbs.as_slice()) {
+        if let Some(r) = crate::open_verbs(&path, config.verbs.as_slice()) {
             return r.is_ok() as _;
         }
     }
 
-    unsafe { (*TRUE_SHELL_EXECUTE_EX_W.get())(pexecinfo) }
+    real()
 }
 
 fn hook(enable: bool) -> windows::core::Result<()> {
@@ -76,7 +84,7 @@ mod tests {
     use super::*;
     use std::{
         assert_matches::assert_matches,
-        path::PathBuf,
+        path::{Path, PathBuf},
         sync::{Arc, Mutex},
     };
 

@@ -16,6 +16,7 @@ bin = ["dep:clap"]
 anyhow = "1"
 bon = "3"
 clap = { version = "4", optional = true, features = ["derive"] }
+ib-shell-item = { version = "0.1", path = "../ib-shell-item" }
 open = { version = "5", features = ["shellexecute-on-windows"] }
 tracing = "0.1"
 which = "8"
