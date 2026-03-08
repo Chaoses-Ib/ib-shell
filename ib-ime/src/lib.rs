@@ -2,7 +2,7 @@
 A library for controlling input controls' IME (Input Method Editor) behavior on Windows.
 
 Usage:
-```rust
+```ignore
 // cargo add ib-ime
 
 // Manually set:
