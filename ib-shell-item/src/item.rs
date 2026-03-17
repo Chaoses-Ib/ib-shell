@@ -102,6 +102,7 @@ impl ShellItemDisplayName {
 
 /// [IShellItem (shobjidl_core.h) - Win32 apps | Microsoft Learn](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nn-shobjidl_core-ishellitem)
 pub trait ShellItem {
+    /// [SHCreateItemFromIDList function (shobjidl_core.h) - Win32 apps | Microsoft Learn](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-shcreateitemfromidlist)
     #[doc(alias = "from_pidl")]
     fn from_id_list(id_list: *const ITEMIDLIST) -> Result<IShellItem>;
 

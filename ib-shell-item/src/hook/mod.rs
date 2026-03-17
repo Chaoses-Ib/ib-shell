@@ -22,12 +22,12 @@ use std::{cell::SyncUnsafeCell, path::PathBuf, sync::RwLock};
 
 use bon::Builder;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, error, info, trace};
-use windows::{Win32::UI::Shell::IShellItem, core::Interface};
-use windows_sys::{
-    Win32::UI::Shell::Common::ITEMIDLIST,
-    core::{GUID, HRESULT},
+use tracing::{debug, error, info, trace, warn};
+use windows::{
+    Win32::UI::Shell::{IShellItem, IShellItem2},
+    core::{GUID, Interface},
 };
+use windows_sys::{Win32::UI::Shell::Common::ITEMIDLIST, core::HRESULT};
 
 use crate::{ShellItem, ShellItemDisplayName};
 
@@ -36,6 +36,8 @@ pub mod display_name;
 pub mod dll;
 #[cfg(feature = "hook-dll")]
 pub mod inject;
+#[cfg(feature = "property")]
+pub mod property;
 
 type SHCreateItemFromIDListFn = unsafe extern "system" fn(
     pidl: *const ITEMIDLIST,
@@ -59,6 +61,9 @@ pub struct HookConfig {
     /// If `Some`, the hook will intercept [`IShellItem::GetDisplayName`] calls.
     pub display_name: Option<display_name::DisplayNameHookConfig>,
 
+    #[cfg(feature = "property")]
+    pub property: Option<property::PropertyHookConfig>,
+
     /// Path to the log file.
     ///
     /// Existing logs in the log file won't be cleared.
@@ -72,9 +77,12 @@ pub struct HookConfig {
 static HOOK_CONFIG: RwLock<HookConfig> = RwLock::new(HookConfig {
     enabled: false,
     display_name: None,
+    #[cfg(feature = "property")]
+    property: None,
     log: None,
 });
 
+/// [`ShellItem::from_id_list`]
 unsafe extern "system" fn sh_create_item_from_id_list(
     pidl: *const ITEMIDLIST,
     riid: *const GUID,
@@ -92,9 +100,32 @@ unsafe extern "system" fn sh_create_item_from_id_list(
     // If successful, get and log the display name
     trace!(?pidl, ?riid, ?ppv, ?result, "SHCreateItemFromIDList called");
     if result >= 0 {
-        let ppv = ppv as *mut IShellItem;
-        let item = unsafe { &*ppv };
-        let name = ShellItem::get_display_name(item, ShellItemDisplayName::FileSystemPath);
+        let iid = unsafe { *riid };
+        let item = unsafe {
+            match iid {
+                IShellItem::IID => {
+                    // let ppv = ppv as *mut IShellItem;
+                    // unsafe { &*ppv }
+                    IShellItem::from_raw_borrowed(&*ppv).unwrap()
+                }
+                IShellItem2::IID => {
+                    /*
+                    match IShellItem2::from_raw_borrowed(&*ppv).unwrap().cast() {
+                        Ok(item) => item,
+                        Err(e) => {
+                            error!(?e);
+                            return result;
+                    }
+                    */
+                    return result;
+                }
+                _ => {
+                    warn!(?iid, "unknown");
+                    return result;
+                }
+            }
+        };
+        let name = item.get_display_name(ShellItemDisplayName::FileSystemPath);
         debug!(?name, "SHCreateItemFromIDList called");
 
         // Hook GetDisplayName if name config is some
@@ -102,6 +133,15 @@ unsafe extern "system" fn sh_create_item_from_id_list(
             let get_display_name = item.vtable().GetDisplayName;
             if let Err(e) = display_name::enable_hook(get_display_name) {
                 error!(%e, "Failed to hook GetDisplayName");
+            }
+        }
+
+        #[cfg(feature = "property")]
+        if config.property.is_some() {
+            if let Ok(item2) = item.cast::<IShellItem2>() {
+                if let Err(e) = property::enable_hook(&item2) {
+                    error!(%e, "Failed to hook prop");
+                }
             }
         }
     } else {
@@ -174,6 +214,10 @@ pub fn set_hook(config: Option<HookConfig>) {
         // Should be after hook()
         if let Err(e) = display_name::disable_hook() {
             error!(%e, "Failed to detach GetDisplayName");
+        }
+        #[cfg(feature = "property")]
+        if let Err(e) = property::disable_hook() {
+            error!(%e, "Failed to detach prop");
         }
     }
 }

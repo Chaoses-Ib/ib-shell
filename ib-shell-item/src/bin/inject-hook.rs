@@ -12,6 +12,7 @@ use std::{
 
 use ib_shell_item::hook::{
     HookConfig, display_name::DisplayNameHookConfig, inject::ShellItemHooks,
+    property::PropertyHookConfig,
 };
 use tracing::{error, info};
 
@@ -42,6 +43,11 @@ fn main() {
                     DisplayNameHookConfig::builder()
                         .display_prefix(widestring::u16str!("😭").as_slice())
                         .edit_prefix(widestring::u16str!("😭").as_slice())
+                        .build(),
+                )
+                .property(
+                    PropertyHookConfig::builder()
+                        .str_prefix(widestring::u16str!("💢").as_slice())
                         .build(),
                 )
                 .log(log_path)
