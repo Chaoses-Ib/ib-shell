@@ -29,6 +29,7 @@ bin = [
 anyhow = "1"
 bon = "3"
 ctrlc = { version = "3", optional = true, features = ["termination"] }
+num_enum = { version = "0.7", default-features = false }
 serde = { version = "1", features = ["derive"] }
 thiserror = "2"
 tracing = "0.1"

@@ -20,9 +20,10 @@ There are mainly three ways to hook remote processes:
 */
 use std::{cell::SyncUnsafeCell, path::PathBuf, sync::RwLock};
 
+use bon::Builder;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info, trace};
-use windows::Win32::UI::Shell::IShellItem;
+use windows::{Win32::UI::Shell::IShellItem, core::Interface};
 use windows_sys::{
     Win32::UI::Shell::Common::ITEMIDLIST,
     core::{GUID, HRESULT},
@@ -30,6 +31,7 @@ use windows_sys::{
 
 use crate::{ShellItem, ShellItemDisplayName};
 
+pub mod display_name;
 #[cfg(feature = "hook-dll")]
 pub mod dll;
 #[cfg(feature = "hook-dll")]
@@ -49,18 +51,27 @@ static TRUE_SH_CREATE_ITEM_FROM_ID_LIST: SyncUnsafeCell<SHCreateItemFromIDListFn
 
 /// Hook configuration for [`SHCreateItemFromIDList`].
 /// This is used to intercept shell item creation from ID lists.
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize, Clone, Builder)]
 pub struct HookConfig {
     /// If true, the hook will intercept all [`SHCreateItemFromIDList]` calls.
     pub enabled: bool,
+
+    /// If `Some`, the hook will intercept [`IShellItem::GetDisplayName`] calls.
+    pub display_name: Option<display_name::DisplayNameHookConfig>,
+
+    /// Path to the log file.
+    ///
     /// Existing logs in the log file won't be cleared.
     ///
     /// Ignored if `hook-log` feature is not enabled.
     pub log: Option<PathBuf>,
 }
 
+/// Why not `Mutex`?
+/// Besides performance, `RwLock` is also needed to avoid reentrant deadlock.
 static HOOK_CONFIG: RwLock<HookConfig> = RwLock::new(HookConfig {
     enabled: false,
+    display_name: None,
     log: None,
 });
 
@@ -85,6 +96,14 @@ unsafe extern "system" fn sh_create_item_from_id_list(
         let item = unsafe { &*ppv };
         let name = ShellItem::get_display_name(item, ShellItemDisplayName::FileSystemPath);
         debug!(?name, "SHCreateItemFromIDList called");
+
+        // Hook GetDisplayName if name config is some
+        if config.display_name.is_some() {
+            let get_display_name = item.vtable().GetDisplayName;
+            if let Err(e) = display_name::enable_hook(get_display_name) {
+                error!(%e, "Failed to hook GetDisplayName");
+            }
+        }
     } else {
         debug!(?result, "SHCreateItemFromIDList called");
     }
@@ -151,6 +170,10 @@ pub fn set_hook(config: Option<HookConfig>) {
         info!("detach");
         if let Err(e) = hook(false) {
             error!(%e, "Failed to detach hook");
+        }
+        // Should be after hook()
+        if let Err(e) = display_name::disable_hook() {
+            error!(%e, "Failed to detach GetDisplayName");
         }
     }
 }

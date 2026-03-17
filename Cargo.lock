@@ -738,6 +738,7 @@ dependencies = [
  "ctrlc",
  "dll-syringe",
  "ib-shell-item",
+ "num_enum",
  "serde",
  "slim-detours-sys",
  "thiserror",

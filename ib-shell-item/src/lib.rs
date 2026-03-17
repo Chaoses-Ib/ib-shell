@@ -8,5 +8,6 @@ pub mod hook;
 pub mod id_list;
 mod item;
 pub mod path;
+mod string;
 
 pub use item::*;

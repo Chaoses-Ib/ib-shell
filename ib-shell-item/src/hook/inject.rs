@@ -20,8 +20,8 @@ pub struct ShellItemHook {
 
 impl ShellItemHook {
     /// Enable the hook with the given config.
-    pub fn enable_hook(&self, config: HookConfig) {
-        let _ = self.remote_set_hook.call(&Some(config));
+    pub fn set_hook(&self, config: &Option<HookConfig>) {
+        let _ = self.remote_set_hook.call(config);
     }
 
     /// Disable and detach the hook.
@@ -58,8 +58,7 @@ impl ShellItemHooks {
         /// e.g., "explorer.exe", "dopus.exe", "Totalcmd64.exe"
         #[builder(default = "explorer.exe")]
         process_name: &str,
-        /// Path to the log file
-        log_path: Option<&Path>,
+        config: Option<HookConfig>,
     ) -> anyhow::Result<Self> {
         if !dll_path.exists() {
             bail!("DLL not found at: {:?}", dll_path);
@@ -89,17 +88,15 @@ impl ShellItemHooks {
                             .context("Failed to get set_hook procedure")?
                             .context("set_hook not found")?;
 
-                    let config = HookConfig {
-                        enabled: true,
-                        log: log_path.map(|p| p.to_owned()),
-                    };
                     let injected_hook = ShellItemHook {
                         payload: unsafe { transmute(payload) },
                         syringe,
                         remote_set_hook,
                     };
-                    injected_hook.enable_hook(config);
-                    info!("[{}] Hook enabled with log at {:?}", i, log_path);
+                    if config.is_some() {
+                        injected_hook.set_hook(&config);
+                        info!("[{}] Hook enabled", i);
+                    }
 
                     hooks.push(injected_hook);
                 }

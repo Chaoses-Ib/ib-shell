@@ -1,4 +1,5 @@
 use std::{
+    fs,
     path::PathBuf,
     process::exit,
     sync::{
@@ -9,7 +10,9 @@ use std::{
     time::Duration,
 };
 
-use ib_shell_item::hook::inject::ShellItemHooks;
+use ib_shell_item::hook::{
+    HookConfig, display_name::DisplayNameHookConfig, inject::ShellItemHooks,
+};
 use tracing::{error, info};
 
 fn main() {
@@ -28,10 +31,22 @@ fn main() {
         .parent()
         .unwrap()
         .join("hook.log");
+    _ = fs::remove_file(&log_path);
 
     let mut hooks = match ShellItemHooks::inject()
         .dll_path(&dll_path)
-        .log_path(&log_path)
+        .config(
+            HookConfig::builder()
+                .enabled(true)
+                .display_name(
+                    DisplayNameHookConfig::builder()
+                        .display_prefix(widestring::u16str!("😭").as_slice())
+                        .edit_prefix(widestring::u16str!("😭").as_slice())
+                        .build(),
+                )
+                .log(log_path)
+                .build(),
+        )
         .call()
     {
         Ok(hooks) => hooks,
