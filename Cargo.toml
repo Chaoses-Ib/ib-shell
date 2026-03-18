@@ -11,6 +11,13 @@ resolver = "3"
 repository = "https://github.com/Chaoses-Ib/ib-shell"
 license = "MIT"
 
+[patch.crates-io]
+everything-ipc = { git = "https://github.com/Chaoses-Ib/IbEverythingLib" }
+
 [profile.release]
 lto = "fat"
 codegen-units = 1
+
+[profile.release-debug]
+inherits = "release"
+debug-assertions = true

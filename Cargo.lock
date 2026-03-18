@@ -621,6 +621,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "everything-ipc"
+version = "0.1.1"
+source = "git+https://github.com/Chaoses-Ib/IbEverythingLib#7e4cb96bdb812521e959a94ba65fa4d5c5960578"
+dependencies = [
+ "bon",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "widestring",
+ "windows 0.62.2",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "find-msvc-tools"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -735,13 +749,16 @@ version = "0.1.1"
 dependencies = [
  "anyhow",
  "bon",
+ "clap",
  "ctrlc",
  "dll-syringe",
+ "everything-ipc",
  "ib-shell-item",
  "num_enum",
  "serde",
  "slim-detours-sys",
  "thiserror",
+ "tokio",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
@@ -1667,6 +1684,15 @@ checksum = "2e70e4c5a0e0a8a4823ad65dfe1a6930e4f4d756dcd9dd7939022b5e8c501215"
 dependencies = [
  "num-conv",
  "time-core",
+]
+
+[[package]]
+name = "tokio"
+version = "1.50.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "27ad5e34374e03cfffefc301becb44e9dc3c17584f414349ebe29ed26661822d"
+dependencies = [
+ "pin-project-lite",
 ]
 
 [[package]]

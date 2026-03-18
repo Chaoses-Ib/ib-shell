@@ -31,7 +31,13 @@ hook-log = [
     "dep:tracing-appender",
 ]
 
+everything = [
+    "dep:everything-ipc",
+    "dep:tokio",
+]
+
 bin = [
+    "dep:clap",
     "dep:ctrlc",
     "dep:tracing-subscriber",
 ]
@@ -39,10 +45,13 @@ bin = [
 [dependencies]
 anyhow = "1"
 bon = "3"
+clap = { version = "4", optional = true, features = ["derive"] }
 ctrlc = { version = "3", optional = true, features = ["termination"] }
+everything-ipc = { version = "0.1", optional = true }
 num_enum = { version = "0.7", default-features = false }
 serde = { version = "1", features = ["derive"] }
 thiserror = "2"
+tokio = { version = "1", optional = true, features = ["rt"] }
 tracing = "0.1"
 tracing-appender = { version = "0.2", optional = true }
 tracing-subscriber = { version = "0.3", optional = true }
@@ -66,6 +75,7 @@ ib-shell-item = { path = ".", features = [
     "hook",
     "hook-dll",
     "hook-log",
+    "everything",
     "bin",
 ] }
 

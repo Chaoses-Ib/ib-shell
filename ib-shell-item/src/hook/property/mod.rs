@@ -20,6 +20,10 @@ pub mod value;
 pub struct PropertyHookConfig {
     /// Mainly for testing.
     str_prefix: Option<Vec<u16>>,
+
+    #[cfg(feature = "everything")]
+    #[builder(default)]
+    size_from_everything: bool,
 }
 
 pub(crate) type GetPropertyStoreFn = unsafe extern "system" fn(

@@ -7,6 +7,8 @@ use std::{
 };
 
 use tracing::{debug, error, trace};
+#[cfg(feature = "everything")]
+use windows::Win32::Storage::EnhancedStorage::PKEY_Size;
 use windows::{
     Win32::{
         Foundation::PROPERTYKEY,
@@ -64,7 +66,45 @@ pub(crate) unsafe extern "system" fn get_value(
         let v = unsafe { &*pv };
         let path = LazyCell::new(|| store.get_parsing_path().unwrap_or_default());
         match *pkey {
-            PKEY_ParsingPath => (),
+            PKEY_ParsingPath => return result,
+            #[cfg(feature = "everything")]
+            PKEY_Size => {
+                if config.size_from_everything && v.is_empty() {
+                    #[cfg(debug_assertions)]
+                    let t = std::time::Instant::now();
+                    let rt = tokio::runtime::Builder::new_current_thread()
+                        .enable_time()
+                        .build()
+                        .unwrap();
+                    match {
+                        let r = rt.block_on(async {
+                            #[cfg(debug_assertions)]
+                            debug!(t1 = ?t.elapsed());
+                            everything_ipc::pipe::EverythingClient::builder()
+                                .build()
+                                .await
+                                .and_then(|client| {
+                                    // ~20us
+                                    #[cfg(debug_assertions)]
+                                    debug!(t2 = ?t.elapsed());
+                                    // TODO: Preread folder
+                                    client.get_folder_size_from_filename(&path.to_string())
+                                })
+                        });
+                        // 100~200us
+                        #[cfg(debug_assertions)]
+                        debug!(t3 = ?t.elapsed());
+                        r
+                    } {
+                        Ok(size) => {
+                            debug!(path = %*path, size, "everything");
+                            unsafe { *pv = size.into() };
+                            return result;
+                        }
+                        Err(e) => error!(?e, path = %*path, "everything"),
+                    }
+                }
+            }
             _ => trace!(path = %*path, ?pkey, ?v, "GetValue"),
         }
         match v.vt() {

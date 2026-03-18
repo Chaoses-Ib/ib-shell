@@ -10,20 +10,32 @@ use std::{
     time::Duration,
 };
 
+use clap::Parser;
 use ib_shell_item::hook::{
     HookConfig, display_name::DisplayNameHookConfig, inject::ShellItemHooks,
     property::PropertyHookConfig,
 };
 use tracing::{error, info};
 
+#[derive(Parser)]
+#[command(name = "inject-hook")]
+#[command(about = "Inject shell item hooks into the process", long_about = None)]
+struct Args {
+    /// Build profile (debug or release)
+    #[arg(short, long)]
+    profile: String,
+}
+
 fn main() {
     tracing_subscriber::fmt::init();
+
+    let args = Args::parse();
 
     let dll_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .unwrap()
         .join("target")
-        .join("debug")
+        .join(&args.profile)
         .join("examples")
         .join("hook.dll");
 
@@ -45,11 +57,13 @@ fn main() {
                         .edit_prefix(widestring::u16str!("😭").as_slice())
                         .build(),
                 )
-                .property(
-                    PropertyHookConfig::builder()
-                        .str_prefix(widestring::u16str!("💢").as_slice())
-                        .build(),
-                )
+                .property({
+                    let property = PropertyHookConfig::builder()
+                        .str_prefix(widestring::u16str!("💢").as_slice());
+                    #[cfg(feature = "everything")]
+                    let property = property.size_from_everything(true);
+                    property.build()
+                })
                 .log(log_path)
                 .build(),
         )
