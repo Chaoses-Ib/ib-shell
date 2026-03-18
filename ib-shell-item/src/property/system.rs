@@ -4,13 +4,15 @@ use widestring::U16CStr;
 use windows::{
     Win32::{
         Foundation::PROPERTYKEY,
-        System::Com::{COINIT_APARTMENTTHREADED, CoInitializeEx, StructuredStorage::PROPVARIANT},
+        System::Com::StructuredStorage::PROPVARIANT,
         UI::Shell::PropertiesSystem::{PROPDESC_FORMAT_FLAGS, PSGetPropertySystem},
     },
     core::{Interface, PWSTR, Result},
 };
 
 pub use windows::Win32::UI::Shell::PropertiesSystem::IPropertySystem;
+
+use crate::init;
 
 /// [IPropertySystem (propsys.h)](https://learn.microsoft.com/en-us/windows/win32/api/propsys/nn-propsys-ipropertysystem)
 ///
@@ -52,7 +54,7 @@ pub trait PropertySystem {
     /// The calling application must use [`CoTaskMemFree`] to release the returned string when it is no longer needed.
     ///
     /// ## Implementation
-    /// ```
+    /// ```cpp
     /// CFormatForDisplay::FormatForDisplay() {
     ///   CFormatForDisplay::_FormatSize() {
     ///     PSStrFormatKBSizeW()
@@ -69,7 +71,7 @@ pub trait PropertySystem {
 
 impl PropertySystem for IPropertySystem {
     fn new_init() -> Result<IPropertySystem> {
-        _ = unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) };
+        _ = init();
         Self::new()
     }
 

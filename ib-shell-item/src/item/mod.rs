@@ -13,6 +13,9 @@ use windows::{
     core::Result,
 };
 
+#[cfg(feature = "property")]
+pub mod item2;
+
 pub use windows::Win32::UI::Shell::IShellItem;
 
 /// Requests the form of an item's display name to retrieve through [`IShellItem::GetDisplayName`] and [`SHGetNameFromIDList`].

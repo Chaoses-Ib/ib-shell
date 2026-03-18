@@ -1,18 +1,26 @@
-use std::{cell::SyncUnsafeCell, ffi::c_void, mem::MaybeUninit, ptr};
+#![allow(non_upper_case_globals)]
+use std::{
+    cell::{LazyCell, SyncUnsafeCell},
+    ffi::c_void,
+    mem::MaybeUninit,
+    ptr,
+};
 
-use tracing::{debug, error};
+use tracing::{debug, error, trace};
 use windows::{
     Win32::{
         Foundation::PROPERTYKEY,
+        Storage::EnhancedStorage::PKEY_ParsingPath,
         System::{
             Com::StructuredStorage::PROPVARIANT,
             Variant::{VT_BSTR, VT_LPWSTR},
         },
+        UI::Shell::PropertiesSystem::IPropertyStore,
     },
     core::{BSTR, HRESULT, Interface},
 };
 
-use crate::hook::HOOK_CONFIG;
+use crate::{hook::HOOK_CONFIG, property::store::PropertyStore};
 
 pub(crate) type GetValueFn =
     unsafe extern "system" fn(*mut c_void, *const PROPERTYKEY, *mut PROPVARIANT) -> HRESULT;
@@ -51,9 +59,14 @@ pub(crate) unsafe extern "system" fn get_value(
     let result = real();
 
     if result.is_ok() {
+        let store = unsafe { IPropertyStore::from_raw_borrowed(&this) }.unwrap();
         let pkey = unsafe { &*pkey };
         let v = unsafe { &*pv };
-        debug!(?pkey, ?v, "GetValue called");
+        let path = LazyCell::new(|| store.get_parsing_path().unwrap_or_default());
+        match *pkey {
+            PKEY_ParsingPath => (),
+            _ => trace!(path = %*path, ?pkey, ?v, "GetValue"),
+        }
         match v.vt() {
             VT_BSTR | VT_LPWSTR => {
                 if let Some(prefix) = &config.str_prefix {
