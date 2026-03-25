@@ -1,3 +1,4 @@
+use num_enum::TryFromPrimitive;
 use widestring::U16CString;
 use windows::{
     Win32::{
@@ -12,12 +13,15 @@ use windows::{
     core::Result,
 };
 
+#[cfg(feature = "property")]
+pub mod item2;
+
 pub use windows::Win32::UI::Shell::IShellItem;
 
 /// Requests the form of an item's display name to retrieve through [`IShellItem::GetDisplayName`] and [`SHGetNameFromIDList`].
 ///
 /// [SIGDN (shobjidl_core.h) - Win32 apps | Microsoft Learn](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/ne-shobjidl_core-sigdn)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, TryFromPrimitive)]
 #[repr(i32)]
 pub enum ShellItemDisplayName {
     /// 0x00000000. Returns the display name relative to the parent folder.
@@ -73,8 +77,35 @@ pub enum ShellItemDisplayName {
     ParentRelativeForUI = SIGDN_PARENTRELATIVEFORUI.0,
 }
 
+impl ShellItemDisplayName {
+    /// Returns `true` if this display name is meant for parsing.
+    pub fn is_for_parse(&self) -> bool {
+        use ShellItemDisplayName::*;
+        matches!(
+            self,
+            ParentRelativeParsing | DesktopAbsoluteParsing | FileSystemPath | Url | ParentRelative
+        )
+    }
+
+    /// Returns `true` if this display name is meant for displaying in UI.
+    pub fn is_for_display(&self) -> bool {
+        use ShellItemDisplayName::*;
+        matches!(
+            self,
+            NormalDisplay | ParentRelativeForAddressBar | ParentRelativeForUI
+        )
+    }
+
+    /// Returns `true` if this display name is meant for editing in UI.
+    pub fn is_for_edit(&self) -> bool {
+        use ShellItemDisplayName::*;
+        matches!(self, ParentRelativeEditing | DesktopAbsoluteEditing)
+    }
+}
+
 /// [IShellItem (shobjidl_core.h) - Win32 apps | Microsoft Learn](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nn-shobjidl_core-ishellitem)
 pub trait ShellItem {
+    /// [SHCreateItemFromIDList function (shobjidl_core.h) - Win32 apps | Microsoft Learn](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-shcreateitemfromidlist)
     #[doc(alias = "from_pidl")]
     fn from_id_list(id_list: *const ITEMIDLIST) -> Result<IShellItem>;
 

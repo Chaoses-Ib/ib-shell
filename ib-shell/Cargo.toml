@@ -1,0 +1,80 @@
+[package]
+name = "ib-shell"
+version = "0.1.0"
+edition = "2024"
+description = "A library for Windows Shell."
+keywords = ["file", "shell", "desktop-environment", "desktop", "hook"]
+categories = ["gui", "os"]
+repository.workspace = true
+license.workspace = true
+
+[features]
+default = [
+    "item",
+]
+
+item = [
+    "dep:ib-shell-item",
+    "ib-shell-item/property",
+]
+verb = ["dep:ib-shell-verb"]
+
+hook = [
+    "dep:ib-hook",
+    "ib-shell-item?/hook",
+    "ib-shell-verb?/hook",
+]
+## The injector and the DLL MUST use the same crate features.
+## Otherwise, deserialization may result in corrupted config or fail.
+hook-dll = [
+    "ib-hook/inject-dll",
+    "ib-hook/inject-dll-dll",
+    "ib-hook/sysinfo",
+    "ib-shell-item?/hook-dll",
+]
+hook-log = [
+    "ib-shell-item?/hook-log",
+]
+
+everything = ["ib-shell-item?/everything"]
+
+bin = [
+    "dep:clap",
+    "dep:ctrlc",
+    "dep:tracing-subscriber",
+]
+
+[dependencies]
+anyhow = "1"
+bon = "3"
+clap = { version = "4", optional = true, features = ["derive"] }
+ctrlc = { version = "3", optional = true, features = ["termination"] }
+ib-hook = { workspace = true, optional = true }
+ib-shell-item = { workspace = true, optional = true }
+ib-shell-verb = { workspace = true, optional = true }
+serde.workspace = true
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", optional = true }
+widestring = "1"
+
+[target.'cfg(target_family = "windows")'.dependencies]
+windows = { version = "0.62", features = [
+] }
+
+[dev-dependencies]
+ib-shell = { path = ".", features = [
+    "item",
+    "verb",
+    "hook",
+    "hook-dll",
+    "hook-log",
+    "everything",
+] }
+
+[[example]]
+name = "hook"
+crate-type = ["cdylib"]
+
+[[bin]]
+name = "inject-hook"
+required-features = ["hook", "hook-dll", "bin"]
