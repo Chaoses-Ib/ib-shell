@@ -53,7 +53,7 @@ static TRUE_SH_CREATE_ITEM_FROM_ID_LIST: SyncUnsafeCell<SHCreateItemFromIDListFn
 
 /// Hook configuration for [`SHCreateItemFromIDList`].
 /// This is used to intercept shell item creation from ID lists.
-#[derive(Default, Serialize, Deserialize, Clone, Builder)]
+#[derive(Default, Serialize, Deserialize, Clone, Builder, Debug)]
 pub struct HookConfig {
     /// If true, the hook will intercept all [`SHCreateItemFromIDList]` calls.
     pub enabled: bool,

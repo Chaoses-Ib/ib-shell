@@ -1,6 +1,7 @@
 [workspace]
 members = [
-    "ib-ime",
+    "ib-ime", 
+    "ib-shell",
     "ib-shell-item",
     "ib-shell-verb",
     # "ib-shell-winio",
@@ -11,8 +12,15 @@ resolver = "3"
 repository = "https://github.com/Chaoses-Ib/ib-shell"
 license = "MIT"
 
+[workspace.dependencies]
+ib-hook = { version = "0.1" }
+ib-shell-item = { path = "ib-shell-item", version = "0.1" }
+ib-shell-verb = { path = "ib-shell-verb", version = "0.1" }
+serde = { version = "1", features = ["derive"] }
+
 [patch.crates-io]
 everything-ipc = { git = "https://github.com/Chaoses-Ib/IbEverythingLib" }
+ib-hook = { git = "https://github.com/Chaoses-Ib/ib-hook" }
 
 [profile.release]
 lto = "fat"

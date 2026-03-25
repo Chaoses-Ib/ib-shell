@@ -15,7 +15,7 @@ use crate::hook::HOOK_CONFIG;
 
 pub mod value;
 
-#[derive(Default, Serialize, Deserialize, Clone, Builder)]
+#[derive(Default, Serialize, Deserialize, Clone, Builder, Debug)]
 #[builder(on(Vec<u16>, into))]
 pub struct PropertyHookConfig {
     /// Mainly for testing.

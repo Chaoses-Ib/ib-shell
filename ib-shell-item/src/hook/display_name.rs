@@ -11,7 +11,7 @@ use windows::{
 
 use crate::{ShellItemDisplayName, hook::HOOK_CONFIG, string};
 
-#[derive(Default, Serialize, Deserialize, Clone, Builder)]
+#[derive(Default, Serialize, Deserialize, Clone, Builder, Debug)]
 #[builder(on(Vec<u16>, into))]
 pub struct DisplayNameHookConfig {
     /// Mainly for testing.
