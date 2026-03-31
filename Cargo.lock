@@ -882,6 +882,7 @@ dependencies = [
  "bon",
  "clap",
  "ctrlc",
+ "derive_more",
  "dll-syringe",
  "everything-ipc",
  "ib-shell-item",

@@ -1,3 +1,4 @@
+use derive_more::From;
 use windows::{
     Win32::{
         System::Com::{CLSCTX_ALL, CoCreateInstance, CoTaskMemFree},
@@ -7,6 +8,15 @@ use windows::{
 };
 
 use super::item::ShellItem;
+
+#[derive(Debug, Clone, Copy, From)]
+pub struct ChildID(pub *const ITEMIDLIST);
+
+#[derive(Debug, Clone, Copy, From)]
+pub struct RelativeIDList(pub *const ITEMIDLIST);
+
+#[derive(Debug, Clone, Copy, From)]
+pub struct AbsoluteIDList(pub *const ITEMIDLIST);
 
 /// [IPersistIDList (shobjidl_core.h) - Win32 apps | Microsoft Learn](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nn-shobjidl_core-ipersistidlist)
 pub trait PersistIDList {

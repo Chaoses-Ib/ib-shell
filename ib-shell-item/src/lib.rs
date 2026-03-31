@@ -7,6 +7,7 @@ use windows::{
     core::HRESULT,
 };
 
+pub mod folder;
 #[cfg(feature = "hook")]
 pub mod hook;
 pub mod id_list;
