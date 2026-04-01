@@ -1,16 +1,19 @@
+use std::cmp;
+
 use num_enum::TryFromPrimitive;
 use widestring::U16CString;
 use windows::{
     Win32::{
         System::Com::CoTaskMemFree,
         UI::Shell::{
-            Common::ITEMIDLIST, SHCreateItemFromIDList, SIGDN, SIGDN_DESKTOPABSOLUTEEDITING,
-            SIGDN_DESKTOPABSOLUTEPARSING, SIGDN_FILESYSPATH, SIGDN_NORMALDISPLAY,
-            SIGDN_PARENTRELATIVE, SIGDN_PARENTRELATIVEEDITING, SIGDN_PARENTRELATIVEFORADDRESSBAR,
-            SIGDN_PARENTRELATIVEFORUI, SIGDN_PARENTRELATIVEPARSING, SIGDN_URL,
+            Common::ITEMIDLIST, SHCreateItemFromIDList, SHCreateItemFromParsingName, SIGDN,
+            SIGDN_DESKTOPABSOLUTEEDITING, SIGDN_DESKTOPABSOLUTEPARSING, SIGDN_FILESYSPATH,
+            SIGDN_NORMALDISPLAY, SIGDN_PARENTRELATIVE, SIGDN_PARENTRELATIVEEDITING,
+            SIGDN_PARENTRELATIVEFORADDRESSBAR, SIGDN_PARENTRELATIVEFORUI,
+            SIGDN_PARENTRELATIVEPARSING, SIGDN_URL,
         },
     },
-    core::Result,
+    core::{PCWSTR, Result},
 };
 
 #[cfg(feature = "property")]
@@ -105,12 +108,36 @@ impl ShellItemDisplayName {
 
 /// [IShellItem (shobjidl_core.h) - Win32 apps | Microsoft Learn](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nn-shobjidl_core-ishellitem)
 pub trait ShellItem {
+    /// [SHCreateItemFromParsingName function (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-shcreateitemfromparsingname)
+    ///
+    /// Although not documented, this requires `CoInitialize()`.
+    fn from_path_w(path: PCWSTR) -> Result<IShellItem> {
+        unsafe { SHCreateItemFromParsingName::<_, _, IShellItem>(path, None) }
+    }
+
     /// [SHCreateItemFromIDList function (shobjidl_core.h) - Win32 apps | Microsoft Learn](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-shcreateitemfromidlist)
     #[doc(alias = "from_pidl")]
     fn from_id_list(id_list: *const ITEMIDLIST) -> Result<IShellItem>;
 
     /// [IShellItem::GetDisplayName (shobjidl_core.h) - Win32 apps | Microsoft Learn](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ishellitem-getdisplayname)
     fn get_display_name(&self, name: ShellItemDisplayName) -> Result<U16CString>;
+
+    /// - `flags`: [`SICHINTF_*` (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/ne-shobjidl_core-_sichintf)
+    ///
+    ///   Different from [`ShellFolder::compare_ids()`], specifying the column doesn't work.
+    ///   (Cleared by `& 0xf0000000`)
+    ///
+    /// Internally, this usually calls [`ShellFolder::compare_ids()`].
+    ///
+    /// [IShellItem::Compare (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ishellitem-compare)
+    ///
+    /// ## Returns
+    /// Although the doc just says
+    /// "If the two items are the same this parameter equals zero; if they are different the parameter is nonzero."
+    /// The sign actually defines the order like [`ShellFolder::compare_ids()`] does.
+    ///
+    /// [`ShellFolder::compare_ids()`]: crate::folder::ShellFolder::compare_ids
+    fn compare(&self, psi: &IShellItem, flags: u32) -> Result<cmp::Ordering>;
 }
 
 impl ShellItem for IShellItem {
@@ -125,5 +152,53 @@ impl ShellItem for IShellItem {
         let name_u16 = unsafe { U16CString::from_ptr_str(name.0) };
         unsafe { CoTaskMemFree(Some(name.0 as _)) };
         Ok(name_u16)
+    }
+
+    fn compare(&self, psi: &IShellItem, hint: u32) -> Result<cmp::Ordering> {
+        let order = unsafe { self.Compare(psi, hint)? };
+        Ok(order.cmp(&0))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use windows::core::w;
+
+    use crate::{init, property::column::FSColumn};
+
+    #[test]
+    fn compare() {
+        _ = init();
+        let windows = IShellItem::from_path_w(w!(r"C:\Windows")).unwrap();
+        let users = IShellItem::from_path_w(w!(r"C:\Users")).unwrap();
+
+        let result = windows.compare(&users, 0).unwrap();
+        assert_eq!(result, cmp::Ordering::Greater);
+        assert_eq!(users.compare(&windows, 0).unwrap(), cmp::Ordering::Less);
+    }
+
+    #[test]
+    fn compare_size() {
+        _ = init();
+        let explorer = IShellItem::from_path_w(w!(r"C:\Windows\explorer.exe")).unwrap();
+        let notepad = IShellItem::from_path_w(w!(r"C:\Windows\notepad.exe")).unwrap();
+
+        let result = explorer.compare(&notepad, 0).unwrap();
+        assert_eq!(result, cmp::Ordering::Less);
+
+        // Different from [`ShellFolder::compare_ids()`], specifying the column doesn't work.
+        let result = explorer.compare(&notepad, FSColumn::Size as u32).unwrap();
+        assert_eq!(result, cmp::Ordering::Less);
+    }
+
+    #[test]
+    fn compare_same() {
+        _ = init();
+        let windows = IShellItem::from_path_w(w!(r"C:\Windows")).unwrap();
+        let windows2 = IShellItem::from_path_w(w!(r"C:\Windows")).unwrap();
+
+        let result = windows.compare(&windows2, 0).unwrap();
+        assert_eq!(result, cmp::Ordering::Equal);
     }
 }

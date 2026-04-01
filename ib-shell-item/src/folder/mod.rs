@@ -206,6 +206,35 @@ mod tests {
     }
 
     #[test]
+    fn compare_ids_size() {
+        let windows = IShellFolder::from_path(HWND::default(), w!(r"C:\Windows")).unwrap();
+
+        let explorer_pidl = windows
+            .parse_display_name_to_id_list(HWND::default(), w!(r"explorer.exe"))
+            .unwrap();
+        let notepad_pidl = windows
+            .parse_display_name_to_id_list(HWND::default(), w!(r"notepad.exe"))
+            .unwrap();
+
+        let result = windows
+            .compare_ids(
+                CompareIDs::builder().column(FSColumn::Size).build(),
+                explorer_pidl,
+                notepad_pidl,
+            )
+            .unwrap();
+        assert_eq!(result, cmp::Ordering::Greater);
+        let result = windows
+            .compare_ids(
+                CompareIDs::builder().column(FSColumn::Size).build(),
+                notepad_pidl,
+                explorer_pidl,
+            )
+            .unwrap();
+        assert_eq!(result, cmp::Ordering::Less);
+    }
+
+    #[test]
     fn compare_ids_nest() {
         let desktop = IShellFolder::from_desktop().unwrap();
 
