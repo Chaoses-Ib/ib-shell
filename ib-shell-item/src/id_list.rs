@@ -17,6 +17,14 @@ use super::item::ShellItem;
 #[derive(Debug, Clone, From)]
 pub struct ChildID(pub *mut ITEMIDLIST);
 
+impl From<RelativeIDList> for ChildID {
+    fn from(value: RelativeIDList) -> Self {
+        let id = Self(value.0);
+        mem::forget(value);
+        id
+    }
+}
+
 impl ChildID {
     pub fn to_ref(&self) -> ChildIDRef<'_> {
         self.into()
@@ -91,6 +99,25 @@ impl<'a> Deref for RelativeIDListRef<'a> {
 
     fn deref(&self) -> &Self::Target {
         unsafe { mem::transmute(self) }
+    }
+}
+
+impl RelativeIDList {
+    /// Converts this [`RelativeIDList`] to a [`ChildID`], transferring ownership.
+    /// The underlying PIDL should be a valid child item ID.
+    ///
+    /// ## Safety
+    /// This is safe as most APIs either check or don't care.
+    pub fn into_child(self) -> ChildID {
+        self.into()
+    }
+
+    /// Converts this [`RelativeIDList`] to a [`ChildIDRef`] without transferring ownership.
+    ///
+    /// ## Safety
+    /// This is safe as most APIs either check or don't care.
+    pub fn to_child_ref(&self) -> ChildIDRef<'_> {
+        ChildIDRef(self.0, PhantomData)
     }
 }
 

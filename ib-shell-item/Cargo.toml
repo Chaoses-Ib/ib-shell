@@ -16,6 +16,7 @@ default = [
 prop = [
     "windows/Win32_UI_Shell_PropertiesSystem",
     "windows/Win32_System_Com_StructuredStorage",
+    "windows/Win32_System_SystemServices",
     "windows/Win32_System_Variant",
     "windows/Win32_Storage_EnhancedStorage",
 ]
@@ -44,6 +45,7 @@ bin = [
 
 [dependencies]
 anyhow = "1"
+bitflags = "2"
 bon = "3"
 clap = { version = "4", optional = true, features = ["derive"] }
 ctrlc = { version = "3", optional = true, features = ["termination"] }

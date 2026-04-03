@@ -1,4 +1,4 @@
-use std::cmp;
+use std::{cmp, mem};
 
 use bon::Builder;
 use windows::{
@@ -12,7 +12,10 @@ use windows::{
     core::{PCWSTR, Result},
 };
 
-use crate::id_list::RelativeIDList;
+use crate::{
+    id_list::{ChildIDRef, RelativeIDList},
+    prop::attribute::ItemAttributes,
+};
 
 /// [IShellFolder::CompareIDs (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ishellfolder-compareids#parameters)
 #[derive(Debug, Clone, Copy, Default, Builder)]
@@ -76,12 +79,17 @@ pub trait ShellFolder {
     /// Ref:
     /// - [IShellFolder from Path String](https://forums.codeguru.com/showthread.php?105564-IShellFolder-from-Path-String)
     /// - [php - How can I convert an absolute system path to an IShellFolder? - Stack Overflow](https://stackoverflow.com/questions/22548071/how-can-i-convert-an-absolute-system-path-to-an-ishellfolder)
-    fn from_path(hwnd: HWND, path: PCWSTR) -> Result<IShellFolder> {
+    fn from_path_w(hwnd: HWND, path: PCWSTR) -> Result<IShellFolder> {
         let desktop = Self::from_desktop()?;
         let pidl = desktop.parse_display_name_to_id_list(hwnd, path)?;
         unsafe { desktop.BindToObject(pidl.0, None) }
     }
 
+    /// Translates the display name of a file object or a folder into an item identifier list.
+    ///
+    /// - Doesn't handle relative path or parent folder indicators ("." or "..").
+    /// - Case-insensitive.
+    ///
     /// [IShellFolder::ParseDisplayName (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ishellfolder-parsedisplayname)
     ///
     /// ## Returns
@@ -107,6 +115,25 @@ pub trait ShellFolder {
         pidl1: &RelativeIDList,
         pidl2: &RelativeIDList,
     ) -> Result<cmp::Ordering>;
+
+    /// [IShellFolder::GetAttributesOf (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ishellfolder-getattributesof)
+    ///
+    /// ## Returns
+    /// Requested attributes in `mask` that are common to all of the specified items.
+    fn get_attributes_of(
+        &self,
+        children: &[ChildIDRef],
+        mask: ItemAttributes,
+    ) -> Result<ItemAttributes>;
+
+    /// Tests if the children are Shell folders (not necessarily file system directories).
+    ///
+    /// This can also be implemented via [`ShellFolder::get_display_name_of()`].
+    /// But it's probably slower as attributes are already stored in the ID.
+    fn are_children_folders(&self, children: &[ChildIDRef]) -> bool {
+        self.get_attributes_of(children, ItemAttributes::Folder)
+            .is_ok_and(|attrs| attrs.contains(ItemAttributes::Folder))
+    }
 }
 
 impl ShellFolder for IShellFolder {
@@ -142,6 +169,17 @@ impl ShellFolder for IShellFolder {
         // dbg!(code, code.cmp(&0));
         Ok(code.cmp(&0))
     }
+
+    fn get_attributes_of(
+        &self,
+        children: &[ChildIDRef],
+        mask: ItemAttributes,
+    ) -> Result<ItemAttributes> {
+        let children: &[*const ITEMIDLIST] = unsafe { mem::transmute(children) };
+        let mut mask = mask.bits();
+        unsafe { self.GetAttributesOf(children, &mut mask) }?;
+        Ok(ItemAttributes::from_bits_retain(mask))
+    }
 }
 
 #[cfg(test)]
@@ -158,7 +196,7 @@ mod tests {
 
     #[test]
     fn from_path() {
-        let _folder = IShellFolder::from_path(HWND::default(), w!(r"C:\Windows")).unwrap();
+        let _folder = IShellFolder::from_path_w(HWND::default(), w!(r"C:\Windows")).unwrap();
     }
 
     #[test]
@@ -175,7 +213,7 @@ mod tests {
 
     #[test]
     fn compare_ids() {
-        let c = IShellFolder::from_path(HWND::default(), w!(r"C:\")).unwrap();
+        let c = IShellFolder::from_path_w(HWND::default(), w!(r"C:\")).unwrap();
 
         let windows_pidl = c
             .parse_display_name_to_id_list(HWND::default(), w!(r"Windows"))
@@ -208,7 +246,7 @@ mod tests {
 
     #[test]
     fn compare_ids_size() {
-        let windows = IShellFolder::from_path(HWND::default(), w!(r"C:\Windows")).unwrap();
+        let windows = IShellFolder::from_path_w(HWND::default(), w!(r"C:\Windows")).unwrap();
 
         let explorer_pidl = windows
             .parse_display_name_to_id_list(HWND::default(), w!(r"explorer.exe"))

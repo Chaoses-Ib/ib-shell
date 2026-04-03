@@ -21,7 +21,7 @@ pub mod item2;
 
 pub use windows::Win32::UI::Shell::IShellItem;
 
-use crate::id_list::AbsoluteIDList;
+use crate::{id_list::AbsoluteIDList, prop::attribute::ItemAttributes};
 
 /// Requests the form of an item's display name to retrieve through [`IShellItem::GetDisplayName`] and [`SHGetNameFromIDList`].
 ///
@@ -145,6 +145,18 @@ pub trait ShellItem {
     ///
     /// [`ShellFolder::compare_ids()`]: crate::folder::ShellFolder::compare_ids
     fn compare(&self, psi: &IShellItem, flags: u32) -> Result<cmp::Ordering>;
+
+    /// [IShellItem::GetAttributes (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ishellitem-getattributes)
+    fn get_attributes(&self, mask: ItemAttributes) -> Result<ItemAttributes>;
+
+    /// Tests if the item is a Shell folder (not necessarily a file system directory).
+    ///
+    /// This can also be implemented via [`ShellItem::get_display_name()`].
+    /// But it's probably slower as attributes are already stored in the ID list.
+    fn is_folder(&self) -> bool {
+        self.get_attributes(ItemAttributes::Folder)
+            .is_ok_and(|attrs| attrs.contains(ItemAttributes::Folder))
+    }
 }
 
 impl ShellItem for IShellItem {
@@ -154,6 +166,10 @@ impl ShellItem for IShellItem {
         let name_u16 = unsafe { U16CString::from_ptr_str(name.0) };
         unsafe { CoTaskMemFree(Some(name.0 as _)) };
         Ok(name_u16)
+    }
+
+    fn get_attributes(&self, mask: ItemAttributes) -> Result<ItemAttributes> {
+        unsafe { self.GetAttributes(mask.into()).map(Into::into) }
     }
 
     fn compare(&self, psi: &IShellItem, hint: u32) -> Result<cmp::Ordering> {
