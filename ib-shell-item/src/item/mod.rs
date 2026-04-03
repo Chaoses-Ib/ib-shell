@@ -6,7 +6,7 @@ use windows::{
     Win32::{
         System::Com::CoTaskMemFree,
         UI::Shell::{
-            Common::ITEMIDLIST, SHCreateItemFromIDList, SHCreateItemFromParsingName, SIGDN,
+            SHCreateItemFromIDList, SHCreateItemFromParsingName, SIGDN,
             SIGDN_DESKTOPABSOLUTEEDITING, SIGDN_DESKTOPABSOLUTEPARSING, SIGDN_FILESYSPATH,
             SIGDN_NORMALDISPLAY, SIGDN_PARENTRELATIVE, SIGDN_PARENTRELATIVEEDITING,
             SIGDN_PARENTRELATIVEFORADDRESSBAR, SIGDN_PARENTRELATIVEFORUI,
@@ -20,6 +20,8 @@ use windows::{
 pub mod item2;
 
 pub use windows::Win32::UI::Shell::IShellItem;
+
+use crate::id_list::AbsoluteIDList;
 
 /// Requests the form of an item's display name to retrieve through [`IShellItem::GetDisplayName`] and [`SHGetNameFromIDList`].
 ///
@@ -116,8 +118,13 @@ pub trait ShellItem {
     }
 
     /// [SHCreateItemFromIDList function (shobjidl_core.h) - Win32 apps | Microsoft Learn](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-shcreateitemfromidlist)
+    ///
+    /// ## References
+    /// https://github.com/Hau-Hau/restart-explorer/blob/230ed6dd78ac656a86e07310c3afc62f03057a36/src/infrastructure/windows_os/persist_id_list.rs
     #[doc(alias = "from_pidl")]
-    fn from_id_list(id_list: *const ITEMIDLIST) -> Result<IShellItem>;
+    fn from_id_list(id_list: &AbsoluteIDList) -> Result<IShellItem> {
+        unsafe { SHCreateItemFromIDList::<IShellItem>(id_list.0) }
+    }
 
     /// [IShellItem::GetDisplayName (shobjidl_core.h) - Win32 apps | Microsoft Learn](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ishellitem-getdisplayname)
     fn get_display_name(&self, name: ShellItemDisplayName) -> Result<U16CString>;
@@ -141,11 +148,6 @@ pub trait ShellItem {
 }
 
 impl ShellItem for IShellItem {
-    /// Ref: https://github.com/Hau-Hau/restart-explorer/blob/230ed6dd78ac656a86e07310c3afc62f03057a36/src/infrastructure/windows_os/persist_id_list.rs
-    fn from_id_list(id_list: *const ITEMIDLIST) -> Result<IShellItem> {
-        unsafe { SHCreateItemFromIDList::<IShellItem>(id_list) }
-    }
-
     /// Ref: https://github.com/Hau-Hau/restart-explorer/blob/230ed6dd78ac656a86e07310c3afc62f03057a36/src/infrastructure/windows_os/shell_item.rs
     fn get_display_name(&self, name: ShellItemDisplayName) -> Result<U16CString> {
         let name = unsafe { self.GetDisplayName(SIGDN(name as i32)) }?;

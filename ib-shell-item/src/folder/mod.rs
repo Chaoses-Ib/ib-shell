@@ -64,7 +64,7 @@ pub trait ShellFolder {
     /// Creates a child folder that represents the folder containing the given item.
     ///
     /// [IShellFolder::BindToObject (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ishellfolder-bindtoobject)
-    fn from_id_list(pidl: RelativeIDList) -> Result<IShellFolder> {
+    fn from_id_list(pidl: &RelativeIDList) -> Result<IShellFolder> {
         let desktop = Self::from_desktop()?;
         unsafe { desktop.BindToObject(pidl.0, None) }
     }
@@ -104,8 +104,8 @@ pub trait ShellFolder {
     fn compare_ids(
         &self,
         param: CompareIDs,
-        pidl1: RelativeIDList,
-        pidl2: RelativeIDList,
+        pidl1: &RelativeIDList,
+        pidl2: &RelativeIDList,
     ) -> Result<cmp::Ordering>;
 }
 
@@ -133,8 +133,8 @@ impl ShellFolder for IShellFolder {
     fn compare_ids(
         &self,
         param: CompareIDs,
-        pidl1: RelativeIDList,
-        pidl2: RelativeIDList,
+        pidl1: &RelativeIDList,
+        pidl2: &RelativeIDList,
     ) -> Result<cmp::Ordering> {
         let hres = unsafe { self.CompareIDs(param.into(), pidl1.0, pidl2.0) };
         hres.ok()?;
@@ -183,6 +183,7 @@ mod tests {
         let users_pidl = c
             .parse_display_name_to_id_list(HWND::default(), w!(r"Users"))
             .unwrap();
+        let (windows_pidl, users_pidl) = (&windows_pidl, &users_pidl);
         dbg!(windows_pidl, users_pidl);
 
         let result = c
@@ -215,6 +216,7 @@ mod tests {
         let notepad_pidl = windows
             .parse_display_name_to_id_list(HWND::default(), w!(r"notepad.exe"))
             .unwrap();
+        let (explorer_pidl, notepad_pidl) = (&explorer_pidl, &notepad_pidl);
 
         let result = windows
             .compare_ids(
@@ -244,6 +246,7 @@ mod tests {
         let users_pidl = desktop
             .parse_display_name_to_id_list(HWND::default(), w!(r"C:\Users"))
             .unwrap();
+        let (windows_pidl, users_pidl) = (&windows_pidl, &users_pidl);
 
         let result = desktop
             .compare_ids(Default::default(), windows_pidl, users_pidl)
@@ -266,6 +269,7 @@ mod tests {
         let pidl2 = desktop
             .parse_display_name_to_id_list(HWND::default(), w!(r"C:\Windows"))
             .unwrap();
+        let (pidl1, pidl2) = (&pidl1, &pidl2);
 
         let result = desktop
             .compare_ids(Default::default(), pidl1, pidl2)
@@ -279,6 +283,7 @@ mod tests {
         let desktop = IShellFolder::from_desktop().unwrap();
         let pidl1 = RelativeIDList(Default::default());
         let pidl2 = RelativeIDList(Default::default());
+        let (pidl1, pidl2) = (&pidl1, &pidl2);
         let result = desktop.compare_ids(Default::default(), pidl1, pidl2);
         assert!(result.is_err());
     }

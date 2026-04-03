@@ -1,5 +1,6 @@
 use std::{cell::SyncUnsafeCell, sync::Mutex};
 
+use ib_shell_item::id_list::AbsoluteIDList;
 use tracing::{debug, error};
 use widestring::U16CStr;
 use windows_sys::{
@@ -28,9 +29,10 @@ unsafe extern "system" fn shell_execute_ex_w(pexecinfo: *mut SHELLEXECUTEINFOW) 
 
     // Some programs use PIDL to open normal files
     // https://github.com/Chaoses-Ib/IbEverythingExt/issues/104
-    let Some(path) =
-        ib_shell_item::path::ShellPath::from_path_or_id_list(info.lpFile, info.lpIDList as _)
-    else {
+    let Some(path) = ib_shell_item::path::ShellPath::from_path_or_id_list(
+        info.lpFile,
+        AbsoluteIDList::from_raw_void_ref(&info.lpIDList),
+    ) else {
         return real();
     };
 
