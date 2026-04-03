@@ -20,7 +20,7 @@ pub struct AbsoluteIDList(pub *mut ITEMIDLIST);
 
 impl AbsoluteIDList {
     /// The following classes are not supported:
-    /// - [`PropertyStore`](crate::property::store::PropertyStore): `CFSFolderPropertyStore`
+    /// - [`PropertyStore`](crate::prop::store::PropertyStore): `CFSFolderPropertyStore`
     ///
     /// [SHGetIDListFromObject function (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-shgetidlistfromobject)
     pub fn from_object(unk: impl Param<IUnknown>) -> Result<Self> {

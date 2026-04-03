@@ -49,7 +49,7 @@ pub trait PropertyStore {
     ```
     use ib_shell_item::{
         init,
-        property::store::{IPropertyStore, PropertyStore},
+        prop::store::{IPropertyStore, PropertyStore},
     };
     use windows::core::w;
     _ = init();
@@ -81,7 +81,7 @@ pub trait PropertyStore {
     ```
     use ib_shell_item::{
         init,
-        property::store::{IPropertyStore, PropertyStore},
+        prop::store::{IPropertyStore, PropertyStore},
     };
     use windows::core::w;
     _ = init();

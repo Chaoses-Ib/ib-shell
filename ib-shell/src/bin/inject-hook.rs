@@ -15,7 +15,7 @@ use ib_shell::{
     app,
     hook::{HookConfig, inject::ShellInjector},
     item::hook::{
-        display_name::DisplayNameHookConfig, inject::ShellItemHooks, property::PropertyHookConfig,
+        display_name::DisplayNameHookConfig, inject::ShellItemHooks, prop::PropertyHookConfig,
     },
 };
 use tracing::{error, info};

@@ -13,7 +13,7 @@ pub mod hook;
 pub mod id_list;
 mod item;
 pub mod path;
-pub mod property;
+pub mod prop;
 mod string;
 
 pub use item::*;

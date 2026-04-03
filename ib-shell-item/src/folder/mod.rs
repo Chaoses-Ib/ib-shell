@@ -17,7 +17,7 @@ use crate::id_list::RelativeIDList;
 /// [IShellFolder::CompareIDs (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ishellfolder-compareids#parameters)
 #[derive(Debug, Clone, Copy, Default, Builder)]
 pub struct CompareIDs {
-    /// - [`property::column::FSColumn`](crate::property::column::FSColumn)
+    /// - [`prop::column::FSColumn`](crate::prop::column::FSColumn)
     #[builder(default, into)]
     pub column: u16,
     #[builder(default)]
@@ -149,7 +149,7 @@ mod tests {
     use super::*;
     use windows::core::w;
 
-    use crate::property::column::FSColumn;
+    use crate::prop::column::FSColumn;
 
     #[test]
     fn from_desktop() {

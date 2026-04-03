@@ -13,7 +13,7 @@ use std::{
 use clap::Parser;
 use ib_shell_item::hook::{
     HookConfig, display_name::DisplayNameHookConfig, inject::ShellItemHooks,
-    property::PropertyHookConfig,
+    prop::PropertyHookConfig,
 };
 use tracing::{error, info};
 

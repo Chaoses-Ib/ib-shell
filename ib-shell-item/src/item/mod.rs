@@ -16,7 +16,7 @@ use windows::{
     core::{PCWSTR, Result},
 };
 
-#[cfg(feature = "property")]
+#[cfg(feature = "prop")]
 pub mod item2;
 
 pub use windows::Win32::UI::Shell::IShellItem;
@@ -165,7 +165,7 @@ mod tests {
     use super::*;
     use windows::core::w;
 
-    use crate::{init, property::column::FSColumn};
+    use crate::{init, prop::column::FSColumn};
 
     #[test]
     fn compare() {

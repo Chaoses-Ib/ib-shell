@@ -22,7 +22,7 @@ use windows::{
     core::{BSTR, HRESULT, Interface},
 };
 
-use crate::{hook::HOOK_CONFIG, property::store::PropertyStore};
+use crate::{hook::HOOK_CONFIG, prop::store::PropertyStore};
 
 pub(crate) type GetValueFn =
     unsafe extern "system" fn(*mut c_void, *const PROPERTYKEY, *mut PROPVARIANT) -> HRESULT;
