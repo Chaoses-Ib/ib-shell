@@ -277,8 +277,8 @@ mod tests {
     fn compare_ids_err() {
         // CompareIDs with invalid PIDs should fail - just verify it compiles and returns Err
         let desktop = IShellFolder::from_desktop().unwrap();
-        let pidl1 = RelativeIDList(std::ptr::null());
-        let pidl2 = RelativeIDList(std::ptr::null());
+        let pidl1 = RelativeIDList(Default::default());
+        let pidl2 = RelativeIDList(Default::default());
         let result = desktop.compare_ids(Default::default(), pidl1, pidl2);
         assert!(result.is_err());
     }
