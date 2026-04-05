@@ -85,7 +85,7 @@ pub fn set_hook(config: Option<HookConfig>) {
 mod tests {
     use super::*;
     use std::{
-        assert_matches::assert_matches,
+        assert_matches,
         path::{Path, PathBuf},
         sync::{Arc, Mutex},
     };
