@@ -70,13 +70,16 @@ pub(crate) unsafe extern "system" fn get_value(
             #[cfg(feature = "everything")]
             PKEY_Size => {
                 if config.size_from_everything && v.is_empty() {
+                    /*
                     #[cfg(debug_assertions)]
                     let t = std::time::Instant::now();
                     let rt = tokio::runtime::Builder::new_current_thread()
                         .enable_time()
                         .build()
                         .unwrap();
+                    */
                     match {
+                        /*
                         let r = rt.block_on(async {
                             #[cfg(debug_assertions)]
                             debug!(t1 = ?t.elapsed());
@@ -95,10 +98,22 @@ pub(crate) unsafe extern "system" fn get_value(
                         #[cfg(debug_assertions)]
                         debug!(t3 = ?t.elapsed());
                         r
+                        */
+                        use std::path::Path;
+
+                        let mut max = 0;
+                        everything_ipc::folder::size::get_folder_size(Path::new(&path.to_string()))
+                            .parent_max_size(&mut max)
+                            .eager_get_links(true)
+                            .call()
+                            .map(|size| (size, max))
                     } {
-                        Ok(size) => {
+                        Ok((size, max)) => {
+                            use crate::hook::prop::magic;
+
                             debug!(path = %*path, size, "everything");
                             unsafe { *pv = size.into() };
+                            magic::ui8_write_u64(pv, max);
                             return result;
                         }
                         Err(e) => error!(?e, path = %*path, "everything"),

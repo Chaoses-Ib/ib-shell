@@ -13,6 +13,8 @@ use windows::{
 
 use crate::hook::HOOK_CONFIG;
 
+pub mod magic;
+pub mod system;
 pub mod value;
 
 #[derive(Default, Serialize, Deserialize, Clone, Builder, Debug)]
@@ -24,6 +26,8 @@ pub struct PropertyHookConfig {
     #[cfg(feature = "everything")]
     #[builder(default)]
     size_from_everything: bool,
+
+    system: Option<system::PropertySystemHookConfig>,
 }
 
 pub(crate) type GetPropertyStoreFn = unsafe extern "system" fn(
@@ -96,6 +100,11 @@ pub(crate) fn enable_hook(item2: &IShellItem2) -> windows::core::Result<()> {
     match state.original_get_store {
         Some(f) if ptr::fn_addr_eq(f, get_property_store) => Ok(()),
         None => {
+            let config = HOOK_CONFIG.read().unwrap();
+            if let Err(e) = system::apply(config.property.as_ref().and_then(|p| p.system.clone())) {
+                error!(?e, "system");
+            };
+
             // Not yet initialized, write the state
             state.original_get_store = Some(get_property_store);
             (*state).real_get_store.write(get_property_store);
@@ -111,6 +120,8 @@ pub(crate) fn enable_hook(item2: &IShellItem2) -> windows::core::Result<()> {
 }
 
 pub(crate) fn disable_hook() -> windows::core::Result<()> {
+    _ = system::apply(None);
+
     let state = GET_PROPERTY_STORE_STATE.get();
     if unsafe { (*state).original_get_store.is_some() } {
         // Unhook and restore original

@@ -12,8 +12,10 @@ use std::{
 
 use clap::Parser;
 use ib_shell_item::hook::{
-    HookConfig, display_name::DisplayNameHookConfig, inject::ShellItemHooks,
-    prop::PropertyHookConfig,
+    HookConfig,
+    display_name::DisplayNameHookConfig,
+    inject::ShellItemHooks,
+    prop::{PropertyHookConfig, system::PropertySystemHookConfig},
 };
 use tracing::{error, info};
 
@@ -59,7 +61,13 @@ fn main() {
                 )
                 .property({
                     let property = PropertyHookConfig::builder()
-                        .str_prefix(widestring::u16str!("💢").as_slice());
+                        .str_prefix(widestring::u16str!("💢").as_slice())
+                        .system(
+                            PropertySystemHookConfig::builder()
+                                .size_no_alwayskb(true)
+                                .size_max_bar(true)
+                                .build(),
+                        );
                     #[cfg(feature = "everything")]
                     let property = property.size_from_everything(true);
                     property.build()
