@@ -2,9 +2,19 @@ use std::{mem, ptr};
 
 use widestring::U16CStr;
 use windows::{
-    Win32::System::Com::{CoTaskMemAlloc, CoTaskMemRealloc},
+    Win32::{
+        System::Com::{CoTaskMemAlloc, CoTaskMemFree, CoTaskMemRealloc},
+        UI::Shell::Common::{STRRET, STRRET_WSTR},
+    },
     core::PWSTR,
 };
+
+#[allow(unused)]
+pub fn strret_free(s: STRRET) {
+    if s.uType == STRRET_WSTR.0 as u32 {
+        unsafe { CoTaskMemFree(Some(s.Anonymous.pOleStr.0 as *mut _)) };
+    }
+}
 
 /// Converts a `&str` to a `PWSTR` by allocating memory using `CoTaskMemAlloc`.
 #[allow(unused)]

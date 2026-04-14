@@ -42,11 +42,11 @@ impl Drop for ChildID {
 ///
 /// You should only use this in C arrays/structs, otherwise `&ChildID` is enough and more idiomatic.
 #[derive(Debug, Clone, Copy)]
-pub struct ChildIDRef<'a>(#[allow(dead_code)] *mut ITEMIDLIST, PhantomData<&'a ()>);
+pub struct ChildIDRef<'a>(pub *const ITEMIDLIST, PhantomData<&'a ()>);
 
 impl<'a> ChildIDRef<'a> {
     /// Creates a `ChildIDRef` from a raw pointer.
-    pub unsafe fn from_raw(ptr: *mut ITEMIDLIST) -> Self {
+    pub unsafe fn from_raw(ptr: *const ITEMIDLIST) -> Self {
         Self(ptr, PhantomData)
     }
 }
@@ -58,7 +58,7 @@ impl<'a> From<&'a ChildID> for ChildIDRef<'a> {
 }
 
 impl<'a> Deref for ChildIDRef<'a> {
-    type Target = &'a ChildID;
+    type Target = ChildID;
 
     fn deref(&self) -> &Self::Target {
         unsafe { mem::transmute(self) }
@@ -79,11 +79,11 @@ impl Drop for RelativeIDList {
 ///
 /// You should only use this in C arrays/structs, otherwise `&RelativeIDList` is enough and more idiomatic.
 #[derive(Debug, Clone, Copy)]
-pub struct RelativeIDListRef<'a>(#[allow(dead_code)] *mut ITEMIDLIST, PhantomData<&'a ()>);
+pub struct RelativeIDListRef<'a>(pub *const ITEMIDLIST, PhantomData<&'a ()>);
 
 impl<'a> RelativeIDListRef<'a> {
     /// Creates a `RelativeIDListRef` from a raw pointer.
-    pub unsafe fn from_raw(ptr: *mut ITEMIDLIST) -> Self {
+    pub unsafe fn from_raw(ptr: *const ITEMIDLIST) -> Self {
         Self(ptr, PhantomData)
     }
 }
@@ -95,7 +95,7 @@ impl<'a> From<&'a RelativeIDList> for RelativeIDListRef<'a> {
 }
 
 impl<'a> Deref for RelativeIDListRef<'a> {
-    type Target = &'a RelativeIDList;
+    type Target = RelativeIDList;
 
     fn deref(&self) -> &Self::Target {
         unsafe { mem::transmute(self) }
@@ -149,11 +149,11 @@ impl Drop for AbsoluteIDList {
 ///
 /// You should only use this in C arrays/structs, otherwise `&AbsoluteIDList` is enough and more idiomatic.
 #[derive(Debug, Clone, Copy)]
-pub struct AbsoluteIDListRef<'a>(#[allow(dead_code)] *mut ITEMIDLIST, PhantomData<&'a ()>);
+pub struct AbsoluteIDListRef<'a>(pub *const ITEMIDLIST, PhantomData<&'a ()>);
 
 impl<'a> AbsoluteIDListRef<'a> {
     /// Creates an `AbsoluteIDListRef` from a raw pointer.
-    pub unsafe fn from_raw(ptr: *mut ITEMIDLIST) -> Self {
+    pub unsafe fn from_raw(ptr: *const ITEMIDLIST) -> Self {
         Self(ptr, PhantomData)
     }
 }
@@ -165,7 +165,7 @@ impl<'a> From<&'a AbsoluteIDList> for AbsoluteIDListRef<'a> {
 }
 
 impl<'a> Deref for AbsoluteIDListRef<'a> {
-    type Target = &'a AbsoluteIDList;
+    type Target = AbsoluteIDList;
 
     fn deref(&self) -> &Self::Target {
         unsafe { mem::transmute(self) }

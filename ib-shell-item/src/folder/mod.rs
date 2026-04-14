@@ -5,11 +5,12 @@ use windows::{
     Win32::{
         Foundation::{HWND, LPARAM},
         UI::Shell::{
-            Common::ITEMIDLIST, IShellFolder, SHCIDS_ALLFIELDS, SHCIDS_CANONICALONLY,
-            SHGetDesktopFolder,
+            Common::{ITEMIDLIST, STRRET},
+            IShellFolder, SHCIDS_ALLFIELDS, SHCIDS_CANONICALONLY, SHGDN_FORPARSING, SHGDNF,
+            SHGetDesktopFolder, StrRetToBSTR,
         },
     },
-    core::{PCWSTR, Result},
+    core::{BSTR, PCWSTR, Result},
 };
 
 use crate::{
@@ -134,6 +135,34 @@ pub trait ShellFolder {
         self.get_attributes_of(children, ItemAttributes::Folder)
             .is_ok_and(|attrs| attrs.contains(ItemAttributes::Folder))
     }
+
+    /// Retrieves the display name for a specified item in the namespace.
+    ///
+    /// [IShellFolder::GetDisplayNameOf (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ishellfolder-getdisplaynameof)
+    ///
+    /// ## Parameters
+    /// - `pidl`: Pointer to an item identifier list that identifies the child item.
+    /// - `uflags`: Flags that specify the type of display name to return.
+    ///
+    ///   See [_SHGDNF (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/ne-shobjidl_core-_shgdnf)
+    ///
+    /// ## Returns
+    /// The display name of the item specified by `pidl`, in the format specified by `uflags`.
+    ///
+    /// Because [`STRRET`] is hard to work with, this method converts it to [`BSTR`]
+    /// before returning. However, this introduces a mem alloc. If you want to avoid it
+    /// you can directly call [`IShellFolder::GetDisplayNameOf()`].
+    fn get_display_name_of(&self, pidl: ChildIDRef, uflags: SHGDNF) -> Result<BSTR>;
+
+    /// Get the display name for parsing relative to the desktop.
+    ///
+    /// i.e. `get_display_name_of(SHGDN_FORPARSING)`
+    ///
+    /// ## Returns
+    /// e.g. `C:\Windows`
+    fn get_path_of(&self, pidl: ChildIDRef) -> Result<BSTR> {
+        self.get_display_name_of(pidl, SHGDN_FORPARSING)
+    }
 }
 
 impl ShellFolder for IShellFolder {
@@ -179,6 +208,14 @@ impl ShellFolder for IShellFolder {
         let mut mask = mask.bits();
         unsafe { self.GetAttributesOf(children, &mut mask) }?;
         Ok(ItemAttributes::from_bits_retain(mask))
+    }
+
+    fn get_display_name_of(&self, pidl: ChildIDRef, uflags: SHGDNF) -> Result<BSTR> {
+        let mut name = STRRET::default();
+        unsafe { self.GetDisplayNameOf(pidl.0, uflags, &mut name) }?;
+        let mut str = BSTR::new();
+        (unsafe { StrRetToBSTR(&mut name, Some(pidl.0), &mut str) })?;
+        Ok(str)
     }
 }
 
@@ -324,5 +361,21 @@ mod tests {
         let (pidl1, pidl2) = (&pidl1, &pidl2);
         let result = desktop.compare_ids(Default::default(), pidl1, pidl2);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn get_display_name_of() {
+        let c = IShellFolder::from_path_w(HWND::default(), w!(r"C:\")).unwrap();
+
+        let windows_pidl = c
+            .parse_display_name_to_id_list(HWND::default(), w!(r"Windows"))
+            .unwrap();
+
+        // Test with SHGDNF::SHGDN_NORMAL (0)
+        let result = c.get_display_name_of(windows_pidl.to_child_ref(), SHGDNF(0));
+        assert_eq!(result.unwrap().to_string(), "Windows");
+
+        let result = c.get_path_of(windows_pidl.to_child_ref());
+        assert_eq!(result.unwrap().to_string(), r"C:\Windows");
     }
 }
