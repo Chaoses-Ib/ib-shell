@@ -136,6 +136,16 @@ pub trait ShellFolder {
             .is_ok_and(|attrs| attrs.contains(ItemAttributes::Folder))
     }
 
+    /// Tests if the child is a file system directory.
+    ///
+    /// This can also be implemented via [`ShellFolder::get_path_of()`].
+    /// But it's probably slower as attributes are already stored in the ID.
+    fn is_child_fs_folder(&self, child: ChildIDRef) -> bool {
+        const MASK: ItemAttributes = ItemAttributes::Folder.union(ItemAttributes::FileSystem);
+        self.get_attributes_of(&[child], MASK)
+            .is_ok_and(|attrs| attrs.contains(MASK))
+    }
+
     /// Tests if the children are Shell folders (not necessarily file system directories).
     ///
     /// This can also be implemented via [`ShellFolder::get_display_name_of()`].

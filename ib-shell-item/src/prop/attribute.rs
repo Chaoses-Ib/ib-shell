@@ -1,5 +1,10 @@
 use bitflags::bitflags;
 use windows::Win32::System::SystemServices::SFGAO_FLAGS;
+use windows::Win32::System::SystemServices::{
+    SFGAO_BROWSABLE, SFGAO_CANMONIKER, SFGAO_COMPRESSED, SFGAO_CONTENTSMASK, SFGAO_FILESYSANCESTOR,
+    SFGAO_FILESYSTEM, SFGAO_FOLDER, SFGAO_HASSTORAGE, SFGAO_HASSUBFOLDER, SFGAO_PKEYSFGAOMASK,
+    SFGAO_REMOVABLE, SFGAO_STORAGEANCESTOR, SFGAO_STORAGECAPMASK, SFGAO_STREAM, SFGAO_VALIDATE,
+};
 
 /// These flags represent attributes that can be retrieved on an item (file or folder) or set of items.
 ///
@@ -131,22 +136,31 @@ bitflags! {
         const NewContent = 0x00200000;
 
         /// Not supported.
-        const CanMoniker = 0x00400000;
+        ///
+        /// [`ItemAttributes::CanMoniker`], [`ItemAttributes::HasStorage`] and [`ItemAttributes::Stream`]
+        /// have the same value.
+        const CanMoniker = SFGAO_CANMONIKER.0;
 
         /// Not supported.
-        const HasStorage = 0x00800000;
+        ///
+        /// [`ItemAttributes::CanMoniker`], [`ItemAttributes::HasStorage`] and [`ItemAttributes::Stream`]
+        /// have the same value.
+        const HasStorage = SFGAO_HASSTORAGE.0;
 
         /// Indicates that the item has a stream associated with it.
         ///
         /// That stream can be accessed through a call to
         /// `IShellFolder::BindToObject` or `IShellItem::BindToHandler` with
         /// `IID_IStream` in the `riid` parameter.
-        const Stream = 0x01000000;
+        ///
+        /// [`ItemAttributes::CanMoniker`], [`ItemAttributes::HasStorage`] and [`ItemAttributes::Stream`]
+        /// have the same value.
+        const Stream = SFGAO_STREAM.0;
 
         /// Children of this item are accessible through `IStream` or `IStorage`.
         ///
         /// Those children are flagged with [`ItemAttributes::Storage`] or [`ItemAttributes::Stream`].
-        const StorageAncestor = 0x02000000;
+        const StorageAncestor = SFGAO_STORAGEANCESTOR.0;
 
         /// When specified as input, [`ItemAttributes::Validate`] instructs the folder to
         /// validate that the items contained in a folder or Shell item array
@@ -159,21 +173,21 @@ bitflags! {
         /// folder to discard cached properties retrieved by clients of
         /// `IShellFolder2::GetDetailsEx` that might have accumulated for the
         /// specified items.
-        const Validate = 0x04000000;
+        const Validate = SFGAO_VALIDATE.0;
 
         /// The specified items are on removable media or are themselves removable devices.
-        const Removable = 0x08000000;
+        const Removable = SFGAO_REMOVABLE.0;
 
         /// The specified items are compressed.
-        const Compressed = 0x10000000;
+        const Compressed = SFGAO_COMPRESSED.0;
 
         /// The specified items can be hosted inside a web browser or Windows Explorer frame.
-        const Browsable = 0x20000000;
+        const Browsable = SFGAO_BROWSABLE.0;
 
         /// The specified folders are either file system folders or contain at
         /// least one descendant (child, grandchild, or later) that is a file
         /// system ([`ItemAttributes::FileSystem`]) folder.
-        const FileSysAncestor = 0x40000000;
+        const FileSysAncestor = SFGAO_FILESYSANCESTOR.0;
 
         /// The specified items are folders.
         ///
@@ -181,14 +195,14 @@ bitflags! {
         /// such as a compressed file with a `.zip` file name extension. Some
         /// applications might include this flag when testing for items that are
         /// both files and containers.
-        const Folder = 0x80000000;
+        const Folder = SFGAO_FOLDER.0;
 
         /// The specified folders or files are part of the file system (that is,
         /// they are files, directories, or root directories).
         ///
         /// The parsed names of the items can be assumed to be valid Win32 file
         /// system paths. These paths can be either UNC or drive-letter based.
-        const FileSystem = 0x80000000;
+        const FileSystem = SFGAO_FILESYSTEM.0;
 
         /// This flag is a mask for the storage capability attributes:
         /// [`ItemAttributes::Storage`], [`ItemAttributes::Link`], [`ItemAttributes::ReadOnly`], [`ItemAttributes::Stream`],
@@ -196,7 +210,7 @@ bitflags! {
         /// and [`ItemAttributes::FileSystem`].
         ///
         /// Callers normally do not use this value.
-        const StorageCapMask = 0x70C50008;
+        const StorageCapMask = SFGAO_STORAGECAPMASK.0;
 
         /// The specified folders have subfolders.
         ///
@@ -208,13 +222,17 @@ bitflags! {
         /// whenever a significant amount of time is required to determine whether
         /// any subfolders exist. For example, the Shell always returns
         /// [`ItemAttributes::HasSubFolder`] when a folder is located on a network drive.
-        const HasSubFolder = 0x80000000;
+        ///
+        /// ## Remark
+        /// [`ItemAttributes::HasSubFolder`] may access local drives,
+        /// which can be slow.
+        const HasSubFolder = SFGAO_HASSUBFOLDER.0;
 
         /// This flag is a mask for content attributes, at present only
         /// [`ItemAttributes::HasSubFolder`].
         ///
         /// Callers normally do not use this value.
-        const ContentMask = 0x80000000;
+        const ContentMask = SFGAO_CONTENTSMASK.0;
 
         /// Mask used by the `PKEY_SFGAOFlags` property to determine attributes
         /// that are considered to cause slow calculations or lack context:
@@ -222,7 +240,7 @@ bitflags! {
         /// [`ItemAttributes::Validate`].
         ///
         /// Callers normally do not use this value.
-        const PkeySfgaoMask = 0x81044000;
+        const PkeySfgaoMask = SFGAO_PKEYSFGAOMASK.0;
     }
 }
 
@@ -317,5 +335,24 @@ mod tests {
             .unwrap();
         assert!(!multi_attrs.contains(ItemAttributes::Folder));
         assert!(!windows_folder.are_children_folders(children));
+    }
+
+    #[test]
+    fn folder_nosub() {
+        let folder = IShellFolder::from_path_w(HWND::default(), w!(r"C:\Windows")).unwrap();
+
+        let inboxapps_pidl = folder
+            .parse_display_name_to_id_list(HWND::default(), w!(r"InboxApps"))
+            .unwrap()
+            .into_child();
+        let inboxapps_attrs = folder
+            .get_attributes_of(
+                &[inboxapps_pidl.to_ref()],
+                ItemAttributes::Folder | ItemAttributes::FileSystem,
+            )
+            .unwrap();
+        println!("{:X}", inboxapps_attrs);
+        assert!(inboxapps_attrs.contains(ItemAttributes::Folder | ItemAttributes::FileSystem));
+        assert!(folder.is_child_fs_folder(inboxapps_pidl.to_ref()));
     }
 }
