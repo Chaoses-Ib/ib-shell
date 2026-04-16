@@ -670,7 +670,7 @@ dependencies = [
 [[package]]
 name = "everything-ipc"
 version = "0.1.3"
-source = "git+https://github.com/Chaoses-Ib/IbEverythingLib#770675306a7484a421088fbc85d0b5fa0fd1fdc7"
+source = "git+https://github.com/Chaoses-Ib/IbEverythingLib#476fdd410de817e0fa6420d581b8e39f3cd12c3f"
 dependencies = [
  "bitflags 2.11.0",
  "bon",

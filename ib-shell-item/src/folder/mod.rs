@@ -1,3 +1,74 @@
+/*!
+## `CompareIDs()`
+[IShellFolder::CompareIDs (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ishellfolder-compareids)
+
+In Explorer of Windows 11 24H2, `CompareIDs()` is called through:
+```cpp
+windows.storage.dll!DVCompareColumns+0x1d7
+windows.storage.dll!_DSA_MergeSort2+0x15e
+windows.storage.dll!_DSA_MergeSort2+0x54
+windows.storage.dll!_DSA_MergeSort2+0x54
+windows.storage.dll!_DSA_MergeSort2+0x66
+windows.storage.dll!_DSA_MergeSort+0x69
+windows.storage.dll!DSA_Sort+0x4f
+windows.storage.dll!CSortTask::InternalResumeRT+0xc0
+windows.storage.dll!CRunnableTask::Run+0xb6
+windows.storage.dll!CShellTaskThread::ThreadProc+0x2ca
+windows.storage.dll!CShellTaskThread::s_ThreadProc+0x15e
+SHCore.dll!ExecuteWorkItemThreadProc+0x15
+```
+
+Different PIDLs of the same file system path may be passed in rare cases.
+
+If `CompareIDs()` returns error, Explorer will fall back to compare `ItemNameDisplay`
+instead when comparing other properties, including folder size.
+
+Inconsistent ordering may cause buggy results, like the column order is sometimes correct but sometimes wrong.
+
+## Implementations
+### `CFSFolder`
+Interfaces (on Windows 11 24H2):
+- `000214e6_0000_0000_c000_000000000046` `ShellFolder`
+- `b3a4b685_b685_4805_99d9_5dead2873236` `ParentAndItem`
+- `93f2f68c_1d1b_11d3_a30e_00c04f79abd1` `ShellFolder2`
+- `cef04fdf_fe72_11d2_87a5_00c04f6837cf` `PersistFolder3`
+- `0000010c_0000_0000_c000_000000000046` `Persist`
+- `000214ea_0000_0000_c000_000000000046` `PersistFolder`
+- `1ac3d9f0_175c_11d1_95be_00609797ea4f` `PersistFolder2`
+- `000214e5_0000_0000_c000_000000000046` `ShellIcon`
+- `add8ba80_002b_11d0_8f0f_00c04fd7d062` `DelegateFolder`
+- `321a6a6a_d61f_4bf3_97ae_14be2986bb36` `ObjectWithBackReferences`
+- `7d688a70_c613_11d0_999b_00c04fd655e1` `ShellIconOverlay`
+- `37d84f60_42cb_11ce_8135_00aa004bb851` `PersistPropertyBag`
+- `0000000b_0000_0000_c000_000000000046` `Storage`
+- `1df0d7f1_b267_4d28_8b10_12e23202a5c4` `ItemNameLimits`
+- `3409e930_5a39_11d1_83fa_00a0c90dc849` `ContextMenuCB`
+- `b722bccb_4e68_101b_a2bc_00aa00404770` `OleCommandTarget`
+- `a6087428_3be3_4d73_b308_7c04a540bf1a` `ObjectProvider`
+- `fc4801a3_2ba9_11cf_a229_00aa003d7352` `ObjectWithSite`
+- `000214fe_0000_0000_c000_000000000046` `RemoteComputer`
+- `e35b4b2e_00da_4bc1_9f13_38bc11f5d417` `ThumbnailHandlerFactory`
+- `e07010ec_bc17_44c0_97b0_46c7c95b9edc` `ExplorerPaneVisibility`
+- `e9701183_e6b3_4ff2_8568_813615fec7be` `NameSpaceTreeControlFolderCapabilities`
+- `c938b119_d3ad_4d02_b5ee_164c2ec8160e`
+- `fdbee76e_f12b_408e_93ab_9be8521000d9`
+- `2536f9ac_2876_408a_9adf_1fe1c14c0e7f`
+- `089f3011_bb5c_4f9c_9b8f_9a67ed446e91`
+- `08727c66_4a04_456d_8c9a_cc1f65490753`
+- `76347b91_9846_4ce7_9a57_69b910d16123`
+- `0681c275_472b_4097_97b3_f19e4875fdc9`
+- `124bae2c_cb94_42cd_b5b8_4358789684ef`
+- `ff314a1e_06fa_4f3a_84be_7aa1c6be2470`
+- `47d9e2b2_cbb3_4fe3_a925_f49978685982`
+- `053b4a86_0dc9_40a3_b7ed_bc6a2e951f48`
+- `3f943012_447b_4109_8b74_720106853c96`
+- `c51e78b5_566b_4cb0_b6ed_784e18797e23`
+- `dc0ac42a_141e_4876_9c43_824829440de0`
+- `be9da82b_cc54_4b19_8c22_ad7762ff29eb`
+- `013c437f_d523_41fa_8beb_f5100e1ca41c`
+- `127f6acb_7e78_4368_83a4_ed1de72baca6`
+- `d960050c_f4e1_4294_ac4b_598913605923`
+*/
 use std::{cmp, mem};
 
 use bon::Builder;
@@ -10,13 +81,15 @@ use windows::{
             SHGetDesktopFolder, StrRetToBSTR,
         },
     },
-    core::{BSTR, PCWSTR, Result},
+    core::{BSTR, PCWSTR, Result, w},
 };
 
 use crate::{
     id_list::{ChildIDRef, RelativeIDList},
     prop::attribute::ItemAttributes,
 };
+
+mod compare;
 
 /// [IShellFolder::CompareIDs (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ishellfolder-compareids#parameters)
 #[derive(Debug, Clone, Copy, Default, Builder)]
@@ -86,6 +159,11 @@ pub trait ShellFolder {
         unsafe { desktop.BindToObject(pidl.0, None) }
     }
 
+    /// Returns an arbitrary object of [`CFSFolder`](super::folder#cfsfolder).
+    fn from_fs_any(hwnd: HWND) -> Result<IShellFolder> {
+        Self::from_path_w(hwnd, w!(r"C:\Windows"))
+    }
+
     /// Translates the display name of a file object or a folder into an item identifier list.
     ///
     /// - Doesn't handle relative path or parent folder indicators ("." or "..").
@@ -110,6 +188,8 @@ pub trait ShellFolder {
     }
 
     /// [IShellFolder::CompareIDs (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ishellfolder-compareids)
+    ///
+    /// See [`CompareIDs()`](super::folder#compareids) for details.
     fn compare_ids(
         &self,
         param: CompareIDs,

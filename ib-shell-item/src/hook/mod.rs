@@ -34,6 +34,7 @@ use crate::{ShellItem, ShellItemDisplayName};
 pub mod display_name;
 #[cfg(feature = "hook-dll")]
 pub mod dll;
+pub mod folder;
 #[cfg(feature = "hook-dll")]
 pub mod inject;
 #[cfg(feature = "prop")]
@@ -61,6 +62,8 @@ pub struct HookConfig {
     /// If `Some`, the hook will intercept [`IShellItem::GetDisplayName`] calls.
     pub display_name: Option<display_name::DisplayNameHookConfig>,
 
+    pub folder: Option<folder::FolderHookConfig>,
+
     #[cfg(feature = "prop")]
     pub property: Option<prop::PropertyHookConfig>,
 
@@ -77,6 +80,7 @@ pub struct HookConfig {
 static HOOK_CONFIG: RwLock<HookConfig> = RwLock::new(HookConfig {
     enabled: false,
     display_name: None,
+    folder: None,
     #[cfg(feature = "prop")]
     property: None,
     log: None,
@@ -205,6 +209,10 @@ pub fn set_hook(config: Option<HookConfig>) {
             if let Err(e) = hook(true) {
                 error!(%e, "Failed to hook SHCreateItemFromIDList");
             }
+
+            if let Err(e) = folder::apply(hook_config.folder.clone()) {
+                error!(?e, "folder");
+            }
         }
     } else {
         info!("detach");
@@ -218,6 +226,10 @@ pub fn set_hook(config: Option<HookConfig>) {
         #[cfg(feature = "prop")]
         if let Err(e) = prop::disable_hook() {
             error!(%e, "Failed to detach prop");
+        }
+
+        if let Err(e) = folder::apply(None) {
+            error!(?e, "folder");
         }
     }
 }
