@@ -5,7 +5,7 @@ A library for handling of custom Windows Shell verbs (actions like `open`) and i
 */
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(feature = "doc", doc = document_features::document_features!())]
-#![cfg_attr(test, feature(assert_matches))]
+// #![cfg_attr(test, feature(assert_matches))]
 #![cfg_attr(feature = "hook", feature(sync_unsafe_cell))]
 use std::path::Path;
 

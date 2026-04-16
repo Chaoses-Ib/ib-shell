@@ -34,10 +34,11 @@ use crate::{ShellItem, ShellItemDisplayName};
 pub mod display_name;
 #[cfg(feature = "hook-dll")]
 pub mod dll;
+pub mod folder;
 #[cfg(feature = "hook-dll")]
 pub mod inject;
-#[cfg(feature = "property")]
-pub mod property;
+#[cfg(feature = "prop")]
+pub mod prop;
 
 type SHCreateItemFromIDListFn = unsafe extern "system" fn(
     pidl: *const ITEMIDLIST,
@@ -61,8 +62,10 @@ pub struct HookConfig {
     /// If `Some`, the hook will intercept [`IShellItem::GetDisplayName`] calls.
     pub display_name: Option<display_name::DisplayNameHookConfig>,
 
-    #[cfg(feature = "property")]
-    pub property: Option<property::PropertyHookConfig>,
+    pub folder: Option<folder::FolderHookConfig>,
+
+    #[cfg(feature = "prop")]
+    pub property: Option<prop::PropertyHookConfig>,
 
     /// Path to the log file.
     ///
@@ -77,7 +80,8 @@ pub struct HookConfig {
 static HOOK_CONFIG: RwLock<HookConfig> = RwLock::new(HookConfig {
     enabled: false,
     display_name: None,
-    #[cfg(feature = "property")]
+    folder: None,
+    #[cfg(feature = "prop")]
     property: None,
     log: None,
 });
@@ -136,10 +140,10 @@ unsafe extern "system" fn sh_create_item_from_id_list(
             }
         }
 
-        #[cfg(feature = "property")]
+        #[cfg(feature = "prop")]
         if config.property.is_some() {
             if let Ok(item2) = item.cast::<IShellItem2>() {
-                if let Err(e) = property::enable_hook(&item2) {
+                if let Err(e) = prop::enable_hook(&item2) {
                     error!(%e, "Failed to hook prop");
                 }
             }
@@ -205,6 +209,10 @@ pub fn set_hook(config: Option<HookConfig>) {
             if let Err(e) = hook(true) {
                 error!(%e, "Failed to hook SHCreateItemFromIDList");
             }
+
+            if let Err(e) = folder::apply(hook_config.folder.clone()) {
+                error!(?e, "folder");
+            }
         }
     } else {
         info!("detach");
@@ -215,9 +223,13 @@ pub fn set_hook(config: Option<HookConfig>) {
         if let Err(e) = display_name::disable_hook() {
             error!(%e, "Failed to detach GetDisplayName");
         }
-        #[cfg(feature = "property")]
-        if let Err(e) = property::disable_hook() {
+        #[cfg(feature = "prop")]
+        if let Err(e) = prop::disable_hook() {
             error!(%e, "Failed to detach prop");
+        }
+
+        if let Err(e) = folder::apply(None) {
+            error!(?e, "folder");
         }
     }
 }

@@ -49,7 +49,7 @@ pub trait PropertyStore {
     ```
     use ib_shell_item::{
         init,
-        property::store::{IPropertyStore, PropertyStore},
+        prop::store::{IPropertyStore, PropertyStore},
     };
     use windows::core::w;
     _ = init();
@@ -81,7 +81,7 @@ pub trait PropertyStore {
     ```
     use ib_shell_item::{
         init,
-        property::store::{IPropertyStore, PropertyStore},
+        prop::store::{IPropertyStore, PropertyStore},
     };
     use windows::core::w;
     _ = init();
@@ -134,6 +134,7 @@ impl PropertyStore for IPropertyStore {
 
 #[cfg(test)]
 mod tests {
+    use std::assert_matches;
     use windows::{
         Win32::Storage::EnhancedStorage::{
             PKEY_ImageParsingName, PKEY_ItemUrl, PKEY_Link_TargetParsingPath,
@@ -143,7 +144,7 @@ mod tests {
 
     use super::*;
 
-    use crate::init;
+    use crate::{id_list::AbsoluteIDList, init};
 
     #[test]
     fn get_value() {
@@ -198,5 +199,7 @@ mod tests {
 
         let path = prop_store.get_item_path_display().unwrap().to_string();
         assert_eq!(path, r"C:\Users\Public\Public Documents\desktop.ini");
+
+        assert_matches!(AbsoluteIDList::from_object(&prop_store), Err(_));
     }
 }

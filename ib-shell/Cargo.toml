@@ -15,7 +15,7 @@ default = [
 
 item = [
     "dep:ib-shell-item",
-    "ib-shell-item/property",
+    "ib-shell-item/prop",
 ]
 verb = ["dep:ib-shell-verb"]
 
