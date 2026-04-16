@@ -127,10 +127,20 @@ pub trait ShellFolder {
         mask: ItemAttributes,
     ) -> Result<ItemAttributes>;
 
+    /// Tests if the child is a Shell folder (not necessarily a file system directory).
+    ///
+    /// This can also be implemented via [`ShellFolder::get_display_name_of()`].
+    /// But it's probably slower as attributes are already stored in the ID.
+    fn is_child_folder(&self, child: ChildIDRef) -> bool {
+        self.get_attributes_of(&[child], ItemAttributes::Folder)
+            .is_ok_and(|attrs| attrs.contains(ItemAttributes::Folder))
+    }
+
     /// Tests if the children are Shell folders (not necessarily file system directories).
     ///
     /// This can also be implemented via [`ShellFolder::get_display_name_of()`].
     /// But it's probably slower as attributes are already stored in the ID.
+    #[deprecated = "This is usually not supported, including CFSFolder from Windows XP to 11"]
     fn are_children_folders(&self, children: &[ChildIDRef]) -> bool {
         self.get_attributes_of(children, ItemAttributes::Folder)
             .is_ok_and(|attrs| attrs.contains(ItemAttributes::Folder))

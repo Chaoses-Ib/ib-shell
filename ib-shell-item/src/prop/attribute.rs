@@ -259,6 +259,7 @@ mod tests {
         assert!(!explorer.is_folder());
     }
 
+    #[allow(deprecated)]
     #[test]
     fn folder() {
         // Get the C:\Windows folder
@@ -294,6 +295,26 @@ mod tests {
             .get_attributes_of(children, ItemAttributes::Folder)
             .unwrap();
         // Since notepad.exe is not a folder, the common attributes should not include Folder
+        assert!(!multi_attrs.contains(ItemAttributes::Folder));
+        assert!(!windows_folder.are_children_folders(children));
+
+        // Not supported
+        let children = &[system32_pidl.to_ref(), system32_pidl.to_ref()];
+        let multi_attrs = windows_folder
+            .get_attributes_of(children, ItemAttributes::Folder)
+            .unwrap();
+        assert!(!multi_attrs.contains(ItemAttributes::Folder));
+        assert!(!windows_folder.are_children_folders(children));
+
+        // Not supported
+        let system_pidl = windows_folder
+            .parse_display_name_to_id_list(HWND::default(), w!(r"System"))
+            .unwrap()
+            .into_child();
+        let children = &[system32_pidl.to_ref(), system_pidl.to_ref()];
+        let multi_attrs = windows_folder
+            .get_attributes_of(children, ItemAttributes::Folder)
+            .unwrap();
         assert!(!multi_attrs.contains(ItemAttributes::Folder));
         assert!(!windows_folder.are_children_folders(children));
     }
