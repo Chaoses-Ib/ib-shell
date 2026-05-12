@@ -14,7 +14,7 @@ pub mod id_list;
 mod item;
 pub mod path;
 pub mod prop;
-mod string;
+pub mod string;
 
 pub use item::*;
 
