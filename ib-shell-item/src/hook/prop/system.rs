@@ -111,6 +111,7 @@ unsafe extern "system" fn format_for_display_alloc_detour(
 
                 // If too wide, the size column will be truncated from unit to numbers...
                 let bar_width = 25;
+                /*
                 let n = if max == 0 {
                     1
                 } else {
@@ -121,6 +122,14 @@ unsafe extern "system" fn format_for_display_alloc_detour(
                 // Unfortunately, we also can't overlap bar with size string easily.
                 // let bar = "\u{258F}".repeat(n as usize).to_string() + " ";
                 let mut bar = widestring::utf16str!("\u{258F}").repeat(n as usize);
+                */
+                let mut bar = crate::string::bar::StringBar::builder()
+                    .value(size)
+                    .max(max)
+                    .width(bar_width)
+                    .min_bar(true)
+                    .build()
+                    .to_utf16_string();
                 bar.push(' ');
 
                 // let s = format!("{bar} {:.0} KB", size / 1024);

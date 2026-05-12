@@ -9,6 +9,8 @@ use windows::{
     core::PWSTR,
 };
 
+pub mod bar;
+
 #[allow(unused)]
 pub fn strret_free(s: STRRET) {
     if s.uType == STRRET_WSTR.0 as u32 {
