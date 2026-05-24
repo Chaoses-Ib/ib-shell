@@ -20,6 +20,11 @@ use crate::{
 
 #[derive(Default, Serialize, Deserialize, Clone, Builder, Debug)]
 pub struct FolderHookConfig {
+    /// This also reverses the order of folder vs. file,
+    /// i.e. from file > folder to folder > file.
+    /// (降序排序时，文件夹优先于文件)
+    ///
+    /// TODO: Only if `_IsReal()`?
     #[cfg(feature = "everything")]
     #[builder(default)]
     compare_size_from_everything: bool,
@@ -172,6 +177,12 @@ unsafe extern "system" fn compare_ids_detour(
                 */
                 return CompareIDsParam::to_result(Some(r));
             }
+        } else if is_folder1 {
+            // folder > file
+            return CompareIDsParam::to_result(Some(cmp::Ordering::Greater));
+        } else if is_folder2 {
+            // file < folder
+            return CompareIDsParam::to_result(Some(cmp::Ordering::Less));
         }
     }
 
