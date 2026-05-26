@@ -164,7 +164,13 @@ unsafe extern "system" fn compare_ids_detour(
                     .ok()?;
 
                 let r = size1.cmp(&size2);
-                debug!(?param, ?path1, ?path2, ?r);
+                debug!(
+                    tid = ?std::thread::current().id(),
+                    ?param,
+                    ?path1,
+                    ?path2,
+                    ?r
+                );
                 Some(r)
             };
             if let Some(r) = compare() {

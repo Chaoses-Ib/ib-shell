@@ -231,6 +231,11 @@ pub fn set_hook(config: Option<HookConfig>) {
         if let Err(e) = folder::apply(None) {
             error!(?e, "folder");
         }
+
+        #[cfg(feature = "everything")]
+        unsafe {
+            everything_ipc::wm::EverythingClient::shared_quit_join_thread()
+        };
     }
 }
 

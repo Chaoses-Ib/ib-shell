@@ -17,6 +17,8 @@ windows.storage.dll!CShellTaskThread::ThreadProc+0x2ca
 windows.storage.dll!CShellTaskThread::s_ThreadProc+0x15e
 SHCore.dll!ExecuteWorkItemThreadProc+0x15
 ```
+On a different thread than `IPropertyStore::GetValue()` is called,
+and may be different for each sort for the same Explorer window.
 
 Different PIDLs of the same file system path may be passed in rare cases.
 

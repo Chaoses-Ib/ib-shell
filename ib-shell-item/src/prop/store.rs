@@ -15,6 +15,11 @@ pub use windows::Win32::UI::Shell::PropertiesSystem::IPropertyStore;
 use crate::item2::ShellItem2;
 
 /// [IPropertyStore (propsys.h) - Win32 apps | Microsoft Learn](https://learn.microsoft.com/en-us/windows/win32/api/propsys/nn-propsys-ipropertystore)
+/**
+## Thread safety
+In Explorer on Windows 11 24H2, [`PropertyStore::get_value()`] may be called from different threads
+for different Explorer windows of the same process.
+*/
 pub trait PropertyStore {
     /// [SHCreateItemFromParsingName function (shobjidl_core.h)](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-shcreateitemfromparsingname)
     ///

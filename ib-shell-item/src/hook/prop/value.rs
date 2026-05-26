@@ -111,7 +111,7 @@ pub(crate) unsafe extern "system" fn get_value(
                         Ok((size, max)) => {
                             use crate::hook::prop::magic;
 
-                            debug!(path = %*path, size, "everything");
+                            debug!(tid = ?std::thread::current().id(), path = %*path, size, "everything");
                             unsafe { *pv = size.into() };
                             magic::ui8_write_u64(pv, max);
                             return result;
