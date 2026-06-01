@@ -1,10 +1,10 @@
 [workspace]
 members = [
-    "ib-ime", 
+    # "ib-ime",
     "ib-shell",
     "ib-shell-item",
     "ib-shell-verb",
-    # "ib-shell-winio",
+    "ib-shell-winio",
 ]
 resolver = "3"
 
