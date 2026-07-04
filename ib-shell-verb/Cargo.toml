@@ -21,7 +21,7 @@ anyhow = "1"
 bon = "3"
 clap = { version = "4", optional = true, features = ["derive"] }
 document-features = { version = "0.2", optional = true }
-ib-shell-item = { version = "0.1", path = "../ib-shell-item" }
+ib-shell-item = { workspace = true }
 open = { version = "5", features = ["shellexecute-on-windows"] }
 tracing = "0.1"
 which = "8"

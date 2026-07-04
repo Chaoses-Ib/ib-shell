@@ -1,6 +1,6 @@
 [package]
 name = "ib-shell"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "A library for Windows Shell."
 keywords = ["file", "shell", "desktop-environment", "desktop", "hook"]
@@ -13,17 +13,22 @@ default = [
     "item",
 ]
 
+## Shell items.
 item = [
     "dep:ib-shell-item",
     "ib-shell-item/prop",
 ]
+## Shell verbs.
 verb = ["dep:ib-shell-verb"]
 
+## Hooking.
 hook = [
     "dep:ib-hook",
     "ib-shell-item?/hook",
     "ib-shell-verb?/hook",
 ]
+## Hooking, the DLL part.
+##
 ## The injector and the DLL MUST use the same crate features.
 ## Otherwise, deserialization may result in corrupted config or fail.
 hook-dll = [
@@ -32,10 +37,12 @@ hook-dll = [
     "ib-hook/sysinfo",
     "ib-shell-item?/hook-dll",
 ]
+## Hooking logs.
 hook-log = [
     "ib-shell-item?/hook-log",
 ]
 
+## Everything integration.
 everything = ["ib-shell-item?/everything"]
 
 bin = [
@@ -44,11 +51,14 @@ bin = [
     "dep:tracing-subscriber",
 ]
 
+doc = ["dep:document-features"]
+
 [dependencies]
 anyhow = "1"
 bon = "3"
 clap = { version = "4", optional = true, features = ["derive"] }
 ctrlc = { version = "3", optional = true, features = ["termination"] }
+document-features = { version = "0.2", optional = true }
 ib-hook = { workspace = true, optional = true }
 ib-shell-item = { workspace = true, optional = true }
 ib-shell-verb = { workspace = true, optional = true }
@@ -78,3 +88,13 @@ crate-type = ["cdylib"]
 [[bin]]
 name = "inject-hook"
 required-features = ["hook", "hook-dll", "bin"]
+
+[package.metadata.docs.rs]
+targets = ["x86_64-pc-windows-msvc"]
+all-features = true
+# To test this locally, run:
+# ```
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps
+# $env:RUSTDOCFLAGS="--cfg docsrs"; cargo +nightly doc --all-features --no-deps
+# ```
+rustdoc-args = ["--cfg", "docsrs"]

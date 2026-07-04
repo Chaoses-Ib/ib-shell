@@ -1,6 +1,6 @@
 [package]
 name = "ib-shell-item"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2024"
 description = "A library for operating file system files / Windows Shell items."
 keywords = ["path", "file", "shell", "desktop-environment", "desktop"]
@@ -13,6 +13,7 @@ default = [
     "prop",
 ]
 
+## Property System.
 prop = [
     "windows/Win32_UI_Shell_PropertiesSystem",
     "windows/Win32_System_Com_StructuredStorage",
@@ -21,18 +22,25 @@ prop = [
     "windows/Win32_Storage_EnhancedStorage",
 ]
 
+## Hooking.
 hook = [
     "ib-hook/inline",
     "dep:slim-detours-sys",
 ]
+## Hooking, the DLL part.
+##
+## The injector and the DLL MUST use the same crate features.
+## Otherwise, deserialization may result in corrupted config or fail.
 hook-dll = [
     "dep:dll-syringe",
 ]
+## Hooking logs.
 hook-log = [
     "dep:tracing-subscriber",
     "dep:tracing-appender",
 ]
 
+## Everything integration.
 everything = [
     "dep:everything-ipc",
     # "dep:tokio",
@@ -44,6 +52,8 @@ bin = [
     "dep:tracing-subscriber",
 ]
 
+doc = ["dep:document-features"]
+
 [dependencies]
 anyhow = "1"
 bitflags = "2"
@@ -51,6 +61,7 @@ bon = "3"
 clap = { version = "4", optional = true, features = ["derive"] }
 ctrlc = { version = "3", optional = true, features = ["termination"] }
 derive_more = { version = "2", features = ["from", "try_from"] }
+document-features = { version = "0.2", optional = true }
 everything-ipc = { version = "0.1.4", optional = true, features = ["folder"] }
 ib-hook = { workspace = true, optional = true }
 num_enum = { version = "0.7", default-features = false }
@@ -97,7 +108,7 @@ targets = ["x86_64-pc-windows-msvc"]
 all-features = true
 # To test this locally, run:
 # ```
-# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features
-# $env:RUSTDOCFLAGS="--cfg docsrs"; cargo +nightly doc --all-features
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps
+# $env:RUSTDOCFLAGS="--cfg docsrs"; cargo +nightly doc --all-features --no-deps
 # ```
 rustdoc-args = ["--cfg", "docsrs"]

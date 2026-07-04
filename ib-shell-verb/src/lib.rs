@@ -2,6 +2,11 @@
 A library for handling of custom Windows Shell verbs (actions like `open`) and injecting them.
 
 ## Features
+- Invoke verbs.
+- Hook verbs.
+- Open files in workspace for VS Code.
+
+## Crate features
 */
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(feature = "doc", doc = document_features::document_features!())]

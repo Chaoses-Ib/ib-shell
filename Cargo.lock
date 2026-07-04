@@ -801,12 +801,13 @@ dependencies = [
 
 [[package]]
 name = "ib-shell"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "bon",
  "clap",
  "ctrlc",
+ "document-features",
  "ib-hook",
  "ib-shell",
  "ib-shell-item",
@@ -820,7 +821,7 @@ dependencies = [
 
 [[package]]
 name = "ib-shell-item"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "bitflags 2.11.0",
@@ -829,6 +830,7 @@ dependencies = [
  "ctrlc",
  "derive_more",
  "dll-syringe",
+ "document-features",
  "everything-ipc",
  "ib-hook",
  "ib-shell-item",

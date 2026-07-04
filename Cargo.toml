@@ -14,7 +14,7 @@ license = "MIT"
 
 [workspace.dependencies]
 ib-hook = { version = "0.2", features = ["tracing"] }
-ib-shell-item = { path = "ib-shell-item", version = "0.1" }
+ib-shell-item = { path = "ib-shell-item", version = "0.2" }
 ib-shell-verb = { path = "ib-shell-verb", version = "0.1" }
 serde = { version = "1", features = ["derive"] }
 

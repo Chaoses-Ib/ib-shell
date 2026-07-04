@@ -5,6 +5,11 @@
 
 A library for handling of custom Windows Shell verbs (actions like `open`) and injecting them.
 
+## Features
+- Invoke verbs.
+- Hook verbs.
+- Open files in workspace for VS Code.
+
 ## CLI
 - `ib-open-workspace`:
   Given a file path, open its parent folder (or Git root) and show the file in VS Code.
