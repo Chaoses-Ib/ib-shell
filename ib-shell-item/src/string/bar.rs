@@ -9,6 +9,11 @@ const BLOCKS: [char; 8] = [
 ];
 const BLOCKS_N: u64 = BLOCKS.len() as u64;
 
+/// Hair space
+///
+/// https://en.wikipedia.org/wiki/Whitespace_character#Hair_spaces_around_dashes
+pub const HAIR_SPACE: char = '\u{200A}';
+
 /*
 #[derive(Debug, Clone, Copy, Default)]
 pub enum HorizontalAlignment {
@@ -38,6 +43,8 @@ So we use monospaced mode by default, but if you know the app will
 use a proportional font, you should use proportional mode;
 or provide an option to the user.
 
+Is is also found later that proportional bar's width is unstable across screens with different DPI.
+
 Related issues:
 - [资源管理器文件夹大小集成功能在win10的显示问题 - Issue #112 - IbEverythingExt](https://github.com/Chaoses-Ib/IbEverythingExt/issues/112)
 
@@ -60,6 +67,13 @@ pub struct StringBar {
     /// - File Explorer:
     ///   This is equivalent to device-independent pixels (in default scale).
     ///   If too wide, the column will be truncated from right to left, even it's right-aligned.
+    ///
+    ///   The thinnest column by default, Size column, defaults to 100dip width,
+    ///   but only ~84dip is used to display text.
+    ///   For monospaced mode, the max width won't cause trurncation is ~16 with a [`HAIR_SPACE`],
+    ///   and ~15 with a space.
+    ///   For proportional mode, it's ~25.
+    #[builder(default = 15)]
     width: u16,
 
     /// For bars too short, return a minimum bar instead an empty string.

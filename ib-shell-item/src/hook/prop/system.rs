@@ -109,9 +109,10 @@ unsafe extern "system" fn format_for_display_alloc_detour(
             {
                 let s = unsafe { U16CStr::from_ptr_str((*ppszDisplay).0) };
 
+                /*
                 // If too wide, the size column will be truncated from unit to numbers...
                 let bar_width = 25;
-                /*
+
                 let n = if max == 0 {
                     1
                 } else {
@@ -126,17 +127,21 @@ unsafe extern "system" fn format_for_display_alloc_detour(
                 let mut bar = crate::string::bar::StringBar::builder()
                     .value(size)
                     .max(max)
-                    .width(bar_width)
+                    // .width(bar_width)
                     .min_bar(true)
                     .build()
                     .to_utf16_string();
                 bar.push(' ');
+                // bar.push(crate::string::bar::HAIR_SPACE);
+                // bar.insert(0, ' ');
+                // debug!(?bar, ?s);
 
                 // let s = format!("{bar} {:.0} KB", size / 1024);
                 // unsafe { *ppszDisplay = str_to_co_task(&s) };
                 // let prefix: Vec<u16> = bar.encode_utf16().collect();
                 let prefix = bar.as_slice();
                 unsafe { *ppszDisplay = prefix_u16cstr_ptr(s, &prefix) };
+                // unsafe { *ppszDisplay = suffix_u16cstr_ptr(s, &prefix) };
             };
             return S_OK;
         }

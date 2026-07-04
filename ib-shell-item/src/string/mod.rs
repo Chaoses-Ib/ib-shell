@@ -60,3 +60,25 @@ pub(crate) fn prefix_u16cstr_ptr(name: &U16CStr, prefix: &[u16]) -> PWSTR {
 
     PWSTR(ptr)
 }
+
+/// Appends a suffix to a name slice and writes to ptr using [`CoTaskMemRealloc`].
+#[allow(dead_code)]
+pub(crate) fn suffix_u16cstr_ptr(s: &U16CStr, suffix: &[u16]) -> PWSTR {
+    let ptr = unsafe {
+        CoTaskMemRealloc(
+            Some(s.as_ptr().cast()),
+            (s.len() + suffix.len() + 1) * size_of::<u16>(),
+        )
+    } as *mut u16;
+
+    if ptr.is_null() {
+        return PWSTR(s.as_ptr() as _);
+    }
+
+    unsafe {
+        ptr::copy_nonoverlapping(suffix.as_ptr(), ptr.add(s.len()), suffix.len());
+        ptr.add(s.len() + suffix.len()).write(0);
+    }
+
+    PWSTR(ptr)
+}
